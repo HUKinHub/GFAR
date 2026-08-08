@@ -1,0 +1,334 @@
+local Players = game:GetService("Players")
+local RunService = game:GetService("RunService")
+local UserInputService = game:GetService("UserInputService")
+local LocalPlayer = Players.LocalPlayer
+
+if LocalPlayer.PlayerGui:FindFirstChild("FunToolGui") then
+	LocalPlayer.PlayerGui.FunToolGui:Destroy()
+end
+
+local ScreenGui = Instance.new("ScreenGui")
+ScreenGui.Name = "FunToolGui"
+ScreenGui.ResetOnSpawn = false
+ScreenGui.Parent = LocalPlayer.PlayerGui
+
+local ToggleButton = Instance.new("TextButton")
+ToggleButton.Size = UDim2.new(0, 45, 0, 45)
+ToggleButton.Position = UDim2.new(0, 20, 0, 20)
+ToggleButton.Text = "GZ"
+ToggleButton.TextColor3 = Color3.fromRGB(255, 255, 255)
+ToggleButton.TextSize = 16
+ToggleButton.Font = Enum.Font.GothamBold
+ToggleButton.BackgroundColor3 = Color3.fromRGB(0, 150, 255)
+ToggleButton.Active = true
+ToggleButton.Draggable = true
+ToggleButton.Parent = ScreenGui
+
+local BtnCorner = Instance.new("UICorner")
+BtnCorner.CornerRadius = UDim.new(0, 8)
+BtnCorner.Parent = ToggleButton
+
+local Gradient = Instance.new("UIGradient")
+Gradient.Color = ColorSequence.new({
+	ColorSequenceKeypoint.new(0, Color3.fromRGB(0, 150, 255)),
+	ColorSequenceKeypoint.new(0.5, Color3.fromRGB(255, 255, 0)),
+	ColorSequenceKeypoint.new(1, Color3.fromRGB(0, 220, 255))
+})
+Gradient.Rotation = 45
+Gradient.Parent = ToggleButton
+
+local MainFrame = Instance.new("Frame")
+MainFrame.Size = UDim2.new(0, 420, 0, 380)
+MainFrame.Position = UDim2.new(0.5, -210, 0.5, -190)
+MainFrame.BackgroundColor3 = Color3.fromRGB(20, 20, 25)
+MainFrame.BackgroundTransparency = 0.25
+MainFrame.BorderSizePixel = 0
+MainFrame.Active = true
+MainFrame.Draggable = true
+MainFrame.Visible = false
+MainFrame.Parent = ScreenGui
+
+local MainCorner = Instance.new("UICorner")
+MainCorner.CornerRadius = UDim.new(0, 8)
+MainCorner.Parent = MainFrame
+
+local uiOpen = false
+ToggleButton.MouseButton1Click:Connect(function()
+	uiOpen = not uiOpen
+	MainFrame.Visible = uiOpen
+end)
+
+local TopBar = Instance.new("Frame")
+TopBar.Size = UDim2.new(1, 0, 0, 35)
+TopBar.BackgroundColor3 = Color3.fromRGB(15, 15, 20)
+TopBar.BorderSizePixel = 0
+TopBar.Parent = MainFrame
+
+local TopCorner = Instance.new("UICorner")
+TopCorner.CornerRadius = UDim.new(0, 8)
+TopCorner.Parent = TopBar
+
+local Title = Instance.new("TextLabel")
+Title.Size = UDim2.new(1, -20, 1, 0)
+Title.Position = UDim2.new(0, 15, 0, 0)
+Title.BackgroundTransparency = 1
+Title.Text = "Solaris V2 | by kafigCxllme"
+Title.TextColor3 = Color3.fromRGB(240, 240, 240)
+Title.TextSize = 14
+Title.Font = Enum.Font.GothamBold
+Title.TextXAlignment = Enum.TextXAlignment.Left
+Title.Parent = TopBar
+
+local ScrollingFrame = Instance.new("ScrollingFrame")
+ScrollingFrame.Size = UDim2.new(1, -16, 1, -45)
+ScrollingFrame.Position = UDim2.new(0, 8, 0, 40)
+ScrollingFrame.BackgroundTransparency = 1
+ScrollingFrame.BorderSizePixel = 0
+ScrollingFrame.CanvasSize = UDim2.new(0, 0, 0, 0)
+ScrollingFrame.ScrollBarThickness = 4
+ScrollingFrame.Parent = MainFrame
+
+local UIListLayout = Instance.new("UIListLayout")
+UIListLayout.SortOrder = Enum.SortOrder.LayoutOrder
+UIListLayout.Padding = UDim.new(0, 6)
+UIListLayout.Parent = ScrollingFrame
+
+local speedEnabled, speedBox
+local jumpEnabled, jumpBox
+local flyEnabled, flySpeedBox
+local vehicleEnabled, vehicleBox
+local hitboxEnabled, hitboxBox
+local espEnabled = false
+local originalSizes = {}
+local highlights = {}
+
+local function createRow(labelText, defaultVal, isToggleOnly, onToggle)
+	local rowFrame = Instance.new("Frame")
+	rowFrame.Size = UDim2.new(1, -6, 0, 36)
+	rowFrame.BackgroundColor3 = Color3.fromRGB(30, 30, 40)
+	rowFrame.BackgroundTransparency = 0.3
+	rowFrame.BorderSizePixel = 0
+	rowFrame.Parent = ScrollingFrame
+
+	local corner = Instance.new("UICorner")
+	corner.CornerRadius = UDim.new(0, 6)
+	corner.Parent = rowFrame
+
+	local label = Instance.new("TextLabel")
+	label.Size = UDim2.new(0, 170, 1, 0)
+	label.Position = UDim2.new(0, 12, 0, 0)
+	label.BackgroundTransparency = 1
+	label.Text = labelText
+	label.TextColor3 = Color3.fromRGB(220, 220, 220)
+	label.TextSize = 13
+	label.Font = Enum.Font.GothamMedium
+	label.TextXAlignment = Enum.TextXAlignment.Left
+	label.Parent = rowFrame
+
+	local box
+	if not isToggleOnly then
+		box = Instance.new("TextBox")
+		box.Size = UDim2.new(0, 60, 0, 26)
+		box.Position = UDim2.new(1, -160, 0.5, -13)
+		box.BackgroundColor3 = Color3.fromRGB(20, 20, 25)
+		box.TextColor3 = Color3.fromRGB(255, 255, 255)
+		box.Text = tostring(defaultVal)
+		box.TextSize = 12
+		box.Font = Enum.Font.GothamMedium
+		box.ClearTextOnFocus = false
+		local tCorner = Instance.new("UICorner")
+		tCorner.CornerRadius = UDim.new(0, 4)
+		tCorner.Parent = box
+		box.Parent = rowFrame
+	end
+
+	local btn = Instance.new("TextButton")
+	btn.Size = UDim2.new(0, 80, 0, 26)
+	btn.Position = UDim2.new(1, -90, 0.5, -13)
+	btn.BackgroundColor3 = Color3.fromRGB(60, 60, 80)
+	btn.TextColor3 = Color3.fromRGB(255, 255, 255)
+	btn.Text = "OFF"
+	btn.TextSize = 12
+	btn.Font = Enum.Font.GothamBold
+	local bCorner = Instance.new("UICorner")
+	bCorner.CornerRadius = UDim.new(0, 4)
+	bCorner.Parent = btn
+	btn.Parent = rowFrame
+
+	local state = false
+	btn.MouseButton1Click:Connect(function()
+		state = not state
+		btn.Text = state and "ON" or "OFF"
+		btn.BackgroundColor3 = state and Color3.fromRGB(0, 170, 127) or Color3.fromRGB(60, 60, 80)
+		if onToggle then onToggle(state, box) end
+	end)
+
+	return box
+end
+
+speedBox = createRow("WalkSpeed", "16", false, function(state) speedEnabled = state end)
+jumpBox = createRow("Jump Power (1-50)", "50", false, function(state)
+	jumpEnabled = state
+	local char = LocalPlayer.Character
+	if char and char:FindFirstChild("Humanoid") then
+		char.Humanoid.UseJumpPower = true
+		char.Humanoid.JumpPower = jumpEnabled and (tonumber(jumpBox.Text) or 50) or 50
+	end
+end)
+flySpeedBox = createRow("Fly Speed (1-300)", "50", false, function(state) flyEnabled = state end)
+vehicleBox = createRow("Vehicle/Tank Speed", "2", false, function(state) vehicleEnabled = state end)
+hitboxBox = createRow("Hitbox Size", "2", false, function(state)
+	hitboxEnabled = state
+	if not hitboxEnabled then
+		for _, player in ipairs(Players:GetPlayers()) do
+			if player ~= LocalPlayer and player.Character then
+				local hrp = player.Character:FindFirstChild("HumanoidRootPart")
+				if hrp and originalSizes[player] then
+					hrp.Size = originalSizes[player].Size
+					hrp.Transparency = originalSizes[player].Transparency
+					hrp.CanCollide = originalSizes[player].CanCollide
+					hrp.Color = originalSizes[player].Color
+					hrp.Material = originalSizes[player].Material
+				end
+			end
+		end
+		originalSizes = {}
+	end
+end)
+
+createRow("Player ESP", "OFF", true, function(state)
+	espEnabled = state
+	if not espEnabled then
+		for _, hl in pairs(highlights) do
+			if hl then hl:Destroy() end
+		end
+		highlights = {}
+	end
+end)
+
+UIListLayout:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(function()
+	ScrollingFrame.CanvasSize = UDim2.new(0, 0, 0, UIListLayout.AbsoluteContentSize.Y + 10)
+end)
+
+local bg, bv
+RunService.RenderStepped:Connect(function()
+	local char = LocalPlayer.Character
+	if char and char:FindFirstChild("Humanoid") then
+		local humanoid = char.Humanoid
+		if speedEnabled then
+			local val = tonumber(speedBox.Text)
+			if val and humanoid.WalkSpeed ~= val then
+				humanoid.WalkSpeed = val
+			end
+		end
+		if jumpEnabled then
+			local val = tonumber(jumpBox.Text)
+			if val then
+				humanoid.UseJumpPower = true
+				humanoid.JumpPower = math.clamp(val, 1, 50)
+			end
+		end
+	end
+
+	if flyEnabled and char and char:FindFirstChild("HumanoidRootPart") then
+		local hrp = char.HumanoidRootPart
+		local cam = workspace.CurrentCamera
+		local speedVal = tonumber(flySpeedBox.Text) or 50
+		local flySpeed = math.clamp(speedVal, 1, 300)
+
+		if not bg or not bv or bg.Parent ~= hrp then
+			if bg then bg:Destroy() end
+			if bv then bv:Destroy() end
+			bg = Instance.new("BodyGyro")
+			bg.P = 9e4
+			bg.MaxTorque = Vector3.new(9e4, 9e4, 9e4)
+			bg.CFrame = hrp.CFrame
+			bg.Parent = hrp
+			
+			bv = Instance.new("BodyVelocity")
+			bv.Velocity = Vector3.new(0, 0, 0)
+			bv.MaxForce = Vector3.new(9e4, 9e4, 9e4)
+			bv.Parent = hrp
+		end
+
+		bg.CFrame = cam.CFrame
+		local moveDir = Vector3.new()
+		if UserInputService:IsKeyDown(Enum.KeyCode.W) then moveDir = moveDir + cam.CFrame.LookVector end
+		if UserInputService:IsKeyDown(Enum.KeyCode.S) then moveDir = moveDir - cam.CFrame.LookVector end
+		if UserInputService:IsKeyDown(Enum.KeyCode.A) then moveDir = moveDir - cam.CFrame.RightVector end
+		if UserInputService:IsKeyDown(Enum.KeyCode.D) then moveDir = moveDir + cam.CFrame.RightVector end
+		bv.Velocity = moveDir * flySpeed
+	else
+		if bg then bg:Destroy() bg = nil end
+		if bv then bv:Destroy() bv = nil end
+	end
+end)
+
+RunService.Heartbeat:Connect(function()
+	if vehicleEnabled then
+		local char = LocalPlayer.Character
+		if char and char:FindFirstChild("Humanoid") then
+			local humanoid = char.Humanoid
+			if humanoid.SeatPart then
+				local seat = humanoid.SeatPart
+				local multiplier = tonumber(vehicleBox.Text) or 2
+				if seat:IsA("VehicleSeat") and seat.Throttle ~= 0 then
+					seat.AssemblyLinearVelocity = seat.AssemblyLinearVelocity * multiplier
+				elseif seat.Parent and seat.Parent:IsA("Model") then
+					for _, part in ipairs(seat.Parent:GetChildren()) do
+						if part:IsA("BasePart") then
+							part.AssemblyLinearVelocity = part.AssemblyLinearVelocity * (multiplier > 1 and 1.05 or 1)
+						end
+					end
+				end
+			end
+		end
+	end
+
+	if hitboxEnabled then
+		local sizeVal = tonumber(hitboxBox.Text) or 2
+		for _, player in ipairs(Players:GetPlayers()) do
+			if player ~= LocalPlayer and player.Character then
+				local hrp = player.Character:FindFirstChild("HumanoidRootPart")
+				local humanoid = player.Character:FindFirstChild("Humanoid")
+				if hrp and humanoid then
+					if not originalSizes[player] then
+						originalSizes[player] = {
+							Size = hrp.Size,
+							Transparency = hrp.Transparency,
+							CanCollide = hrp.CanCollide,
+							Color = hrp.Color,
+							Material = hrp.Material
+						}
+					end
+					hrp.Size = Vector3.new(sizeVal * 2, sizeVal * 2, sizeVal * 2)
+					hrp.Transparency = 0.85
+					hrp.CanCollide = false
+					hrp.Color = Color3.fromRGB(0, 100, 255)
+					hrp.Material = Enum.Material.Neon
+				end
+			end
+		end
+	end
+
+	if espEnabled then
+		for _, player in ipairs(Players:GetPlayers()) do
+			if player ~= LocalPlayer and player.Character then
+				if not highlights[player] then
+					local hl = Instance.new("Highlight")
+					hl.Adornee = player.Character
+					hl.FillColor = Color3.fromRGB(0, 150, 255)
+					hl.OutlineColor = Color3.fromRGB(255, 255, 255)
+					hl.FillTransparency = 0.5
+					hl.Parent = player.Character
+					highlights[player] = hl
+				end
+			end
+		end
+	else
+		for _, hl in pairs(highlights) do
+			if hl then hl:Destroy() end
+		end
+		highlights = {}
+	end
+end)
