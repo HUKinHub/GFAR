@@ -1,0 +1,344 @@
+local player = game.Players.LocalPlayer
+local playerGui = player:WaitForChild("PlayerGui")
+local camera = workspace.CurrentCamera
+
+if playerGui:FindFirstChild("SolarisV2_BloxFruits") then
+    playerGui.SolarisV2_BloxFruits:Destroy()
+end
+
+local screenGui = Instance.new("ScreenGui")
+screenGui.Name = "SolarisV2_BloxFruits"
+screenGui.ResetOnSpawn = false
+screenGui.Parent = playerGui
+
+local toggleMenuBtn = Instance.new("TextButton")
+toggleMenuBtn.Size = UDim2.new(0, 40, 0, 40)
+toggleMenuBtn.Position = UDim2.new(0, 10, 0, 10)
+toggleMenuBtn.BackgroundColor3 = Color3.fromRGB(30, 30, 35)
+toggleMenuBtn.Text = "UI"
+toggleMenuBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+toggleMenuBtn.TextSize = 14
+toggleMenuBtn.Font = Enum.Font.GothamBold
+toggleMenuBtn.Parent = screenGui
+
+local tmc = Instance.new("UICorner")
+tmc.CornerRadius = UDim.new(0, 6)
+tmc.Parent = toggleMenuBtn
+
+local mainFrame = Instance.new("Frame")
+mainFrame.Size = UDim2.new(0, 350, 0, 420)
+mainFrame.Position = UDim2.new(0.5, -175, 0.5, -210)
+mainFrame.BackgroundColor3 = Color3.fromRGB(24, 24, 28)
+mainFrame.BorderSizePixel = 0
+mainFrame.Active = true
+mainFrame.Draggable = true
+mainFrame.Parent = screenGui
+
+toggleMenuBtn.MouseButton1Click:Connect(function()
+    mainFrame.Visible = not mainFrame.Visible
+end)
+
+local corner = Instance.new("UICorner")
+corner.CornerRadius = UDim.new(0, 6)
+corner.Parent = mainFrame
+
+local topBar = Instance.new("Frame")
+topBar.Size = UDim2.new(1, 0, 0, 35)
+topBar.BackgroundColor3 = Color3.fromRGB(30, 30, 35)
+topBar.BorderSizePixel = 0
+topBar.Parent = mainFrame
+
+local topCorner = Instance.new("UICorner")
+topCorner.CornerRadius = UDim.new(0, 6)
+topCorner.Parent = topBar
+
+local title = Instance.new("TextLabel")
+title.Size = UDim2.new(0, 200, 1, 0)
+title.Position = UDim2.new(0, 12, 0, 0)
+title.BackgroundTransparency = 1
+title.Text = "Solaris V2 - Blox Fruits"
+title.TextColor3 = Color3.fromRGB(220, 220, 220)
+title.TextSize = 14
+title.Font = Enum.Font.GothamBold
+title.TextXAlignment = Enum.TextXAlignment.Left
+title.Parent = topBar
+
+local closeBtn = Instance.new("TextButton")
+closeBtn.Size = UDim2.new(0, 35, 1, 0)
+closeBtn.Position = UDim2.new(1, -35, 0, 0)
+closeBtn.BackgroundTransparency = 1
+closeBtn.Text = "X"
+closeBtn.TextColor3 = Color3.fromRGB(180, 180, 180)
+closeBtn.TextSize = 14
+closeBtn.Font = Enum.Font.GothamBold
+closeBtn.Parent = topBar
+
+closeBtn.MouseButton1Click:Connect(function()
+    mainFrame.Visible = false
+end)
+
+local container = Instance.new("ScrollingFrame")
+container.Size = UDim2.new(1, -16, 1, -45)
+container.Position = UDim2.new(0, 8, 0, 40)
+container.BackgroundTransparency = 1
+container.BorderSizePixel = 0
+container.CanvasSize = UDim2.new(0, 0, 0, 550)
+container.ScrollBarThickness = 4
+container.Parent = mainFrame
+
+local UIList = Instance.new("UIListLayout")
+UIList.SortOrder = Enum.SortOrder.LayoutOrder
+UIList.Padding = UDim.new(0, 6)
+UIList.Parent = container
+
+local function createToggle(name, callback)
+    local btn = Instance.new("TextButton")
+    btn.Size = UDim2.new(1, 0, 0, 38)
+    btn.BackgroundColor3 = Color3.fromRGB(32, 32, 38)
+    btn.Text = "  " .. name
+    btn.TextColor3 = Color3.fromRGB(200, 200, 200)
+    btn.TextSize = 13
+    btn.Font = Enum.Font.Gotham
+    btn.TextXAlignment = Enum.TextXAlignment.Left
+    btn.Parent = container
+    
+    local c = Instance.new("UICorner")
+    c.CornerRadius = UDim.new(0, 4)
+    c.Parent = btn
+    
+    local status = Instance.new("TextLabel")
+    status.Size = UDim2.new(0, 60, 1, 0)
+    status.Position = UDim2.new(1, -65, 0, 0)
+    status.BackgroundTransparency = 1
+    status.Text = "OFF"
+    status.TextColor3 = Color3.fromRGB(220, 70, 70)
+    status.TextSize = 13
+    status.Font = Enum.Font.GothamBold
+    status.Parent = btn
+    
+    local enabled = false
+    btn.MouseButton1Click:Connect(function()
+        enabled = not enabled
+        if enabled then
+            status.Text = "ON"
+            status.TextColor3 = Color3.fromRGB(70, 220, 70)
+        else
+            status.Text = "OFF"
+            status.TextColor3 = Color3.fromRGB(220, 70, 70)
+        end
+        callback(enabled)
+    end)
+end
+
+local function createSlider(name, min, max, callback)
+    local frame = Instance.new("Frame")
+    frame.Size = UDim2.new(1, 0, 0, 50)
+    frame.BackgroundColor3 = Color3.fromRGB(32, 32, 38)
+    frame.Parent = container
+    
+    local c = Instance.new("UICorner")
+    c.CornerRadius = UDim.new(0, 4)
+    c.Parent = frame
+    
+    local lbl = Instance.new("TextLabel")
+    lbl.Size = UDim2.new(1, -20, 0, 25)
+    lbl.Position = UDim2.new(0, 10, 0, 2)
+    lbl.BackgroundTransparency = 1
+    lbl.Text = name .. ": " .. min
+    lbl.TextColor3 = Color3.fromRGB(200, 200, 200)
+    lbl.TextSize = 13
+    lbl.Font = Enum.Font.Gotham
+    lbl.TextXAlignment = Enum.TextXAlignment.Left
+    lbl.Parent = frame
+    
+    local sliderBg = Instance.new("Frame")
+    sliderBg.Size = UDim2.new(1, -20, 0, 6)
+    sliderBg.Position = UDim2.new(0, 10, 0, 32)
+    sliderBg.BackgroundColor3 = Color3.fromRGB(45, 45, 55)
+    sliderBg.BorderSizePixel = 0
+    sliderBg.Parent = frame
+    
+    local sc = Instance.new("UICorner")
+    sc.CornerRadius = UDim.new(0, 3)
+    sc.Parent = sliderBg
+    
+    local fill = Instance.new("Frame")
+    fill.Size = UDim2.new(0, 0, 1, 0)
+    fill.BackgroundColor3 = Color3.fromRGB(0, 160, 255)
+    fill.BorderSizePixel = 0
+    fill.Parent = sliderBg
+    
+    local fc = Instance.new("UICorner")
+    fc.CornerRadius = UDim.new(0, 3)
+    fc.Parent = fill
+    
+    local btn = Instance.new("TextButton")
+    btn.Size = UDim2.new(1, 0, 1, 10)
+    btn.Position = UDim2.new(0, 0, 0, -5)
+    btn.BackgroundTransparency = 1
+    btn.Text = ""
+    btn.Parent = sliderBg
+    
+    local uis = game:GetService("UserInputService")
+    local dragging = false
+    
+    btn.MouseButton1Down:Connect(function()
+        dragging = true
+    end)
+    
+    uis.InputEnded:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.MouseButton1 then
+            dragging = false
+        end
+    end)
+    
+    uis.InputChanged:Connect(function(input)
+        if dragging and input.UserInputType == Enum.UserInputType.MouseMovement then
+            local pos = math.clamp((input.Position.X - sliderBg.AbsolutePosition.X) / sliderBg.AbsoluteSize.X, 0, 1)
+            fill.Size = UDim2.new(pos, 0, 1, 0)
+            local val = math.floor(min + (max - min) * pos)
+            lbl.Text = name .. ": " .. val
+            callback(val)
+        end
+    end)
+end
+
+local function createTextBox(placeholder, callback)
+    local box = Instance.new("TextBox")
+    box.Size = UDim2.new(1, 0, 0, 38)
+    box.BackgroundColor3 = Color3.fromRGB(32, 32, 38)
+    box.PlaceholderText = placeholder
+    box.Text = ""
+    box.TextColor3 = Color3.fromRGB(255, 255, 255)
+    box.PlaceholderColor3 = Color3.fromRGB(120, 120, 130)
+    box.TextSize = 13
+    box.Font = Enum.Font.Gotham
+    box.Parent = container
+    
+    local c = Instance.new("UICorner")
+    c.CornerRadius = UDim.new(0, 4)
+    c.Parent = box
+    
+    box.FocusLost:Connect(function(enterPressed)
+        if enterPressed then
+            callback(box.Text)
+        end
+    end)
+end
+
+local skillLockEnabled = false
+local fovSize = 150
+local walkSpeedVal = 16
+local jumpPowerVal = 50
+local autoV4Enabled = false
+local waterWalkEnabled = false
+local targetPlayerName = ""
+local flyToTargetEnabled = false
+
+local fovDrawing = Drawing.new("Circle")
+fovDrawing.Visible = false
+fovDrawing.Radius = fovSize
+fovDrawing.Color = Color3.fromRGB(255, 255, 255)
+fovDrawing.Thickness = 1
+fovDrawing.Filled = false
+fovDrawing.Transparency = 1
+
+createToggle("Skill Lock (Center FOV)", function(v)
+    skillLockEnabled = v
+    fovDrawing.Visible = v
+end)
+
+createSlider("FOV Size", 50, 400, function(v)
+    fovSize = v
+    fovDrawing.Radius = v
+end)
+
+createSlider("WalkSpeed", 1, 300, function(v)
+    walkSpeedVal = v
+    if player.Character and player.Character:FindFirstChild("Humanoid") then
+        player.Character.Humanoid.WalkSpeed = v
+    end
+end)
+
+createSlider("JumpPower", 50, 350, function(v)
+    jumpPowerVal = v
+    if player.Character and player.Character:FindFirstChild("Humanoid") then
+        player.Character.Humanoid.UseJumpPower = true
+        player.Character.Humanoid.JumpPower = v
+    end
+end)
+
+createToggle("Auto Race V4", function(v)
+    autoV4Enabled = v
+end)
+
+createToggle("Walk On Water", function(v)
+    waterWalkEnabled = v
+end)
+
+createTextBox("Target Player Name", function(txt)
+    targetPlayerName = txt
+end)
+
+createToggle("Fly To Target Player", function(v)
+    flyToTargetEnabled = v
+end)
+
+game:GetService("RunService").RenderStepped:Connect(function()
+    fovDrawing.Position = camera.ViewportSize / 2
+    
+    if skillLockEnabled then
+        local centerPos = camera.ViewportSize / 2
+        local closestTarget = nil
+        local shortestDist = fovSize
+        
+        for _, p in pairs(game.Players:GetPlayers()) do
+            if p ~= player and p.Character and p.Character:FindFirstChild("Head") and p.Character:FindFirstChild("Humanoid") and p.Character.Humanoid.Health > 0 then
+                local head = p.Character.Head
+                local screenPos, onScreen = camera:WorldToViewportPoint(head.Position)
+                if onScreen then
+                    local dist = (centerPos - Vector2.new(screenPos.X, screenPos.Y)).Magnitude
+                    if dist < shortestDist then
+                        shortestDist = dist
+                        closestTarget = head
+                    end
+                end
+            end
+        end
+        if closestTarget then
+            camera.CFrame = CFrame.new(camera.CFrame.Position, closestTarget.Position)
+        end
+    end
+    
+    if walkSpeedVal > 16 and player.Character and player.Character:FindFirstChild("Humanoid") then
+        player.Character.Humanoid.WalkSpeed = walkSpeedVal
+    end
+    
+    if autoV4Enabled then
+        pcall(function()
+            game:GetService("ReplicatedStorage").Remotes.CommF_:InvokeServer("AwakeningV4")
+        end)
+    end
+    
+    if waterWalkEnabled and player.Character and player.Character:FindFirstChild("HumanoidRootPart") then
+        local hrp = player.Character.HumanoidRootPart
+        if hrp.Position.Y < 5 then
+            hrp.Velocity = Vector3.new(hrp.Velocity.X, 0, hrp.Velocity.Z)
+        end
+    end
+    
+    if flyToTargetEnabled and targetPlayerName ~= "" then
+        pcall(function()
+            local target = nil
+            for _, p in pairs(game.Players:GetPlayers()) do
+                if string.sub(string.lower(p.Name), 1, string.len(targetPlayerName)) == string.lower(targetPlayerName) or string.sub(string.lower(p.DisplayName), 1, string.len(targetPlayerName)) == string.lower(targetPlayerName) then
+                    target = p
+                    break
+                end
+            end
+            if target and target.Character and target.Character:FindFirstChild("HumanoidRootPart") and player.Character and player.Character:FindFirstChild("HumanoidRootPart") then
+                player.Character.HumanoidRootPart.CFrame = target.Character.HumanoidRootPart.CFrame + Vector3.new(0, 5, 0)
+            end
+        end)
+    end
+end)
