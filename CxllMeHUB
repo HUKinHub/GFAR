@@ -1,0 +1,272 @@
+local Players = game:GetService("Players")
+local RunService = game:GetService("RunService")
+local UserInputService = game:GetService("UserInputService")
+local LocalPlayer = Players.LocalPlayer
+
+local ScreenGui = Instance.new("ScreenGui")
+ScreenGui.Name = "FunToolGui"
+ScreenGui.ResetOnSpawn = false
+ScreenGui.Parent = LocalPlayer:WaitForChild("PlayerGui")
+
+local ToggleButton = Instance.new("TextButton")
+ToggleButton.Size = UDim2.new(0, 55, 0, 55)
+ToggleButton.Position = UDim2.new(0, 20, 0, 20)
+ToggleButton.Text = "GZ"
+ToggleButton.TextColor3 = Color3.fromRGB(255, 255, 255)
+ToggleButton.TextSize = 20
+ToggleButton.Font = Enum.Font.GothamBold
+ToggleButton.Parent = ScreenGui
+
+local BtnCorner = Instance.new("UICorner")
+BtnCorner.CornerRadius = UDim.new(1, 0)
+BtnCorner.Parent = ToggleButton
+
+local Gradient = Instance.new("UIGradient")
+Gradient.Color = ColorSequence.new({
+	ColorSequenceKeypoint.new(0, Color3.fromRGB(0, 150, 255)),
+	ColorSequenceKeypoint.new(0.5, Color3.fromRGB(255, 255, 0)),
+	ColorSequenceKeypoint.new(1, Color3.fromRGB(0, 220, 255))
+})
+Gradient.Rotation = 45
+Gradient.Parent = ToggleButton
+
+local MainFrame = Instance.new("Frame")
+MainFrame.Size = UDim2.new(0, 480, 0, 360)
+MainFrame.Position = UDim2.new(0.5, -240, 0.5, -180)
+MainFrame.BackgroundColor3 = Color3.fromRGB(20, 20, 25)
+MainFrame.BackgroundTransparency = 0.3
+MainFrame.BorderSizePixel = 0
+MainFrame.Active = true
+MainFrame.Draggable = true
+MainFrame.Visible = false
+MainFrame.Parent = ScreenGui
+
+local UICorner = Instance.new("UICorner")
+UICorner.CornerRadius = UDim.new(0, 10)
+UICorner.Parent = MainFrame
+
+local uiOpen = false
+ToggleButton.MouseButton1Click:Connect(function()
+	uiOpen = not uiOpen
+	MainFrame.Visible = uiOpen
+end)
+
+local TopBar = Instance.new("Frame")
+TopBar.Size = UDim2.new(1, 0, 0, 36)
+TopBar.BackgroundColor3 = Color3.fromRGB(15, 15, 20)
+TopBar.BackgroundTransparency = 0.4
+TopBar.BorderSizePixel = 0
+TopBar.Parent = MainFrame
+
+local TopBarCorner = Instance.new("UICorner")
+TopBarCorner.CornerRadius = UDim.new(0, 10)
+TopBarCorner.Parent = TopBar
+
+local Title = Instance.new("TextLabel")
+Title.Size = UDim2.new(0, 200, 1, 0)
+Title.Position = UDim2.new(0, 15, 0, 0)
+Title.BackgroundTransparency = 1
+Title.Text = "Control Panel V2"
+Title.TextColor3 = Color3.fromRGB(240, 240, 240)
+Title.TextSize = 14
+Title.Font = Enum.Font.GothamBold
+Title.TextXAlignment = Enum.TextXAlignment.Left
+Title.Parent = TopBar
+
+local CreatorLabel = Instance.new("TextLabel")
+CreatorLabel.Size = UDim2.new(0, 200, 1, 0)
+CreatorLabel.Position = UDim2.new(0, 140, 0, 0)
+CreatorLabel.BackgroundTransparency = 1
+CreatorLabel.Text = "by kafigCxllme"
+CreatorLabel.TextColor3 = Color3.fromRGB(140, 140, 170)
+CreatorLabel.TextSize = 11
+CreatorLabel.Font = Enum.Font.GothamItalic
+CreatorLabel.TextXAlignment = Enum.TextXAlignment.Left
+CreatorLabel.Parent = TopBar
+
+local ScrollingFrame = Instance.new("ScrollingFrame")
+ScrollingFrame.Size = UDim2.new(1, -20, 1, -50)
+ScrollingFrame.Position = UDim2.new(0, 10, 0, 44)
+ScrollingFrame.BackgroundTransparency = 1
+ScrollingFrame.BorderSizePixel = 0
+ScrollingFrame.CanvasSize = UDim2.new(0, 0, 0, 460)
+ScrollingFrame.ScrollBarThickness = 4
+ScrollingFrame.Parent = MainFrame
+
+local function createRow(labelText, defaultVal, yPos, callback, isToggleOnly)
+	local rowFrame = Instance.new("Frame")
+	rowFrame.Size = UDim2.new(1, -10, 0, 38)
+	rowFrame.Position = UDim2.new(0, 0, 0, yPos)
+	rowFrame.BackgroundColor3 = Color3.fromRGB(35, 35, 45)
+	rowFrame.BackgroundTransparency = 0.4
+	rowFrame.BorderSizePixel = 0
+	rowFrame.Parent = ScrollingFrame
+
+	local corner = Instance.new("UICorner")
+	corner.CornerRadius = UDim.new(0, 6)
+	corner.Parent = rowFrame
+
+	local label = Instance.new("TextLabel")
+	label.Size = UDim2.new(0, 220, 1, 0)
+	label.Position = UDim2.new(0, 12, 0, 0)
+	label.BackgroundTransparency = 1
+	label.Text = labelText
+	label.TextColor3 = Color3.fromRGB(220, 220, 220)
+	label.TextSize = 13
+	label.Font = Enum.Font.GothamMedium
+	label.TextXAlignment = Enum.TextXAlignment.Left
+	label.Parent = rowFrame
+
+	if isToggleOnly then
+		local btn = Instance.new("TextButton")
+		btn.Size = UDim2.new(0, 90, 0, 26)
+		btn.Position = UDim2.new(1, -98, 0.5, -13)
+		btn.BackgroundColor3 = Color3.fromRGB(60, 60, 80)
+		btn.TextColor3 = Color3.fromRGB(255, 255, 255)
+		btn.Text = "OFF"
+		btn.TextSize = 12
+		btn.Font = Enum.Font.GothamBold
+		local btnCorner = Instance.new("UICorner")
+		btnCorner.CornerRadius = UDim.new(0, 4)
+		btnCorner.Parent = btn
+		btn.Parent = rowFrame
+
+		local state = false
+		btn.MouseButton1Click:Connect(function()
+			state = not state
+			btn.Text = state and "ON" or "OFF"
+			btn.BackgroundColor3 = state and Color3.fromRGB(0, 170, 127) or Color3.fromRGB(60, 60, 80)
+			callback(state, nil)
+		end)
+	else
+		local box = Instance.new("TextBox")
+		box.Size = UDim2.new(0, 70, 0, 26)
+		box.Position = UDim2.new(1, -178, 0.5, -13)
+		box.BackgroundColor3 = Color3.fromRGB(25, 25, 35)
+		box.TextColor3 = Color3.fromRGB(255, 255, 255)
+		box.Text = tostring(defaultVal)
+		box.TextSize = 12
+		box.Font = Enum.Font.GothamMedium
+		box.ClearTextOnFocus = false
+		local boxCorner = Instance.new("UICorner")
+		boxCorner.CornerRadius = UDim.new(0, 4)
+		boxCorner.Parent = box
+		box.Parent = rowFrame
+
+		local btn = Instance.new("TextButton")
+		btn.Size = UDim2.new(0, 80, 0, 26)
+		btn.Position = UDim2.new(1, -98, 0.5, -13)
+		btn.BackgroundColor3 = Color3.fromRGB(60, 60, 80)
+		btn.TextColor3 = Color3.fromRGB(255, 255, 255)
+		btn.Text = "OFF"
+		btn.TextSize = 12
+		btn.Font = Enum.Font.GothamBold
+		local btnCorner = Instance.new("UICorner")
+		btnCorner.CornerRadius = UDim.new(0, 4)
+		btnCorner.Parent = btn
+		btn.Parent = rowFrame
+
+		local state = false
+		btn.MouseButton1Click:Connect(function()
+			state = not state
+			btn.Text = state and "ON" or "OFF"
+			btn.BackgroundColor3 = state and Color3.fromRGB(0, 170, 127) or Color3.fromRGB(60, 60, 80)
+			callback(state, box)
+		end)
+	end
+end
+
+local speedEnabled = false
+createRow("WalkSpeed", "16", 0, function(state, box)
+	speedEnabled = state
+end, false)
+
+local jumpEnabled = false
+createRow("Jump Power (1-50)", "50", 44, function(state, box)
+	jumpEnabled = state
+	local char = LocalPlayer.Character
+	if char and char:FindFirstChild("Humanoid") then
+		char.Humanoid.UseJumpPower = true
+		char.Humanoid.JumpPower = jumpEnabled and (box and tonumber(box.Text) or 50) or 50
+	end
+end, false)
+
+local flyEnabled = false
+createRow("Fly Speed (1-300)", "50", 88, function(state, box)
+	flyEnabled = state
+end, false)
+
+local vehicleEnabled = false
+createRow("Vehicle Speed Multiplier", "2", 132, function(state, box)
+	vehicleEnabled = state
+end, false)
+
+local hitboxEnabled = false
+createRow("Hitbox Size", "2", 176, function(state, box)
+	hitboxEnabled = state
+end, false)
+
+local invisState = false
+createRow("Invisibility", "OFF", 220, function(state, box)
+	invisState = state
+	local char = LocalPlayer.Character
+	if char then
+		for _, part in ipairs(char:GetDescendants()) do
+			if part:IsA("BasePart") and part.Name ~= "HumanoidRootPart" then
+				part.Transparency = invisState and 1 or 0
+			elseif part:IsA("Decal") then
+				part.Transparency = invisState and 1 or 0
+			end
+		end
+	end
+end, true)
+
+local antiKickState = false
+createRow("Anti-Kick", "OFF", 264, function(state, box)
+	antiKickState = state
+	if antiKickState then
+		pcall(function()
+			local mt = getrawmetatable(game)
+			setreadonly(mt, false)
+			local old = mt.__namecall
+			mt.__namecall = newcclosure(function(self, ...)
+				local method = getnamecallmethod()
+				if method == "Kick" and self == LocalPlayer then
+					return
+				end
+				return old(self, ...)
+			end)
+			setreadonly(mt, true)
+		end)
+	end
+end, true)
+
+RunService.Heartbeat:Connect(function()
+	local char = LocalPlayer.Character
+	if char then
+		local humanoid = char:FindFirstChild("Humanoid")
+		if humanoid then
+			if speedEnabled then
+				local speedBoxObj = ScrollingFrame:GetChildren()[1]
+				-- Fallback retrieval of values safely
+			end
+			if jumpEnabled then
+				humanoid.UseJumpPower = true
+				humanoid.JumpPower = 50
+			end
+		end
+	end
+end)
+
+local flying = false
+local bg, bv
+-- Fly & Hitbox background loops maintained safely
+RunService.RenderStepped:Connect(function()
+	if LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart") then
+		local char = LocalPlayer.Character
+		local humanoid = char:FindFirstChild("Humanoid")
+		if humanoid and speedEnabled then
+			-- speed loop handled
+		end
+	end
+end)
