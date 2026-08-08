@@ -1,0 +1,205 @@
+local Players = game:GetService("Players")
+local RunService = game:GetService("RunService")
+local UserInputService = game:GetService("UserInputService")
+local LocalPlayer = Players.LocalPlayer
+
+local ScreenGui = Instance.new("ScreenGui")
+ScreenGui.Name = "FunToolGui"
+ScreenGui.ResetOnSpawn = false
+ScreenGui.Parent = LocalPlayer:WaitForChild("PlayerGui")
+
+local MainFrame = Instance.new("Frame")
+MainFrame.Size = UDim2.new(0, 320, 0, 460)
+MainFrame.Position = UDim2.new(0.5, -160, 0.5, -230)
+MainFrame.BackgroundColor3 = Color3.fromRGB(25, 25, 35)
+MainFrame.BorderSizePixel = 0
+MainFrame.Active = true
+MainFrame.Draggable = true
+MainFrame.Parent = ScreenGui
+
+local UICorner = Instance.new("UICorner")
+UICorner.CornerRadius = UDim.new(0, 12)
+UICorner.Parent = MainFrame
+
+local Title = Instance.new("TextLabel")
+Title.Size = UDim2.new(1, 0, 0, 40)
+Title.BackgroundTransparency = 1
+Title.Text = "Control & Fun Panel"
+Title.TextColor3 = Color3.fromRGB(255, 255, 255)
+Title.TextSize = 16
+Title.Font = Enum.Font.GothamBold
+Title.Parent = MainFrame
+
+local function createLabel(text, yPos)
+	local label = Instance.new("TextLabel")
+	label.Size = UDim2.new(0, 280, 0, 20)
+	label.Position = UDim2.new(0, 20, 0, yPos)
+	label.BackgroundTransparency = 1
+	label.Text = text
+	label.TextColor3 = Color3.fromRGB(200, 200, 200)
+	label.TextSize, label.Font = 13, Enum.Font.Gotham
+	label.TextXAlignment = Enum.TextXAlignment.Left
+	label.Parent = MainFrame
+	return label
+end
+
+local function createTextBox(defaultText, yPos)
+	local box = Instance.new("TextBox")
+	box.Size = UDim2.new(0, 280, 0, 35)
+	box.Position = UDim2.new(0, 20, 0, yPos)
+	box.BackgroundColor3 = Color3.fromRGB(40, 40, 55)
+	box.TextColor3 = Color3.fromRGB(255, 255, 255)
+	box.Text = defaultText
+	box.TextSize, box.Font = 14, Enum.Font.GothamMedium
+	box.ClearTextOnFocus = false
+	local corner = Instance.new("UICorner")
+	corner.CornerRadius = UDim.new(0, 6)
+	corner.Parent = box
+	box.Parent = MainFrame
+	return box
+end
+
+local function createButton(text, yPos, color)
+	local btn = Instance.new("TextButton")
+	btn.Size = UDim2.new(0, 280, 0, 35)
+	btn.Position = UDim2.new(0, 20, 0, yPos)
+	btn.BackgroundColor3 = color
+	btn.TextColor3 = Color3.fromRGB(255, 255, 255)
+	btn.Text = text
+	btn.TextSize, btn.Font = 14, Enum.Font.GothamBold
+	local corner = Instance.new("UICorner")
+	corner.CornerRadius = UDim.new(0, 6)
+	corner.Parent = btn
+	btn.Parent = MainFrame
+	return btn
+end
+
+createLabel("Speed", 45)
+local SpeedBox = createTextBox("16", 70)
+
+createLabel("Jump Power (1-50)", 110)
+local JumpBox = createTextBox("50", 135)
+
+createLabel("Fly Speed (1-300)", 175)
+local FlySpeedBox = createTextBox("50", 200)
+local FlyBtn = createButton("Toggle Fly: OFF", 240, Color3.fromRGB(60, 60, 90))
+
+createLabel("Hitbox Size", 285)
+local HitboxBox = createTextBox("2", 310)
+local HitboxBtn = createButton("Toggle Hitbox: OFF", 350, Color3.fromRGB(60, 60, 90))
+
+local InvisBtn = createButton("Toggle Invisibility: OFF", 395, Color3.fromRGB(90, 60, 60))
+
+SpeedBox.FocusLost:Connect(function()
+	local val = tonumber(SpeedBox.Text)
+	if val and LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("Humanoid") then
+		LocalPlayer.Character.Humanoid.WalkSpeed = val
+	end
+end)
+
+JumpBox.FocusLost:Connect(function()
+	local val = tonumber(JumpBox.Text)
+	if val then
+		val = math.clamp(val, 1, 50)
+		JumpBox.Text = tostring(val)
+		if LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("Humanoid") then
+			LocalPlayer.Character.Humanoid.UseJumpPower = true
+			LocalPlayer.Character.Humanoid.JumpPower = val
+		end
+	end
+end)
+
+local flying = false
+local flySpeed = 50
+local bg, bv
+
+FlyBtn.MouseButton1Click:Connect(function()
+	flying = not flying
+	FlyBtn.Text = "Toggle Fly: " .. (flying and "ON" or "OFF")
+	FlyBtn.BackgroundColor3 = flying and Color3.fromRGB(0, 170, 127) or Color3.fromRGB(60, 60, 90)
+	
+	local char = LocalPlayer.Character
+	if not char or not char:FindFirstChild("HumanoidRootPart") then return end
+	
+	if flying then
+		bg = Instance.new("BodyGyro")
+		bg.P = 9e4
+		bg.MaxTorque = Vector3.new(9e4, 9e4, 9e4)
+		bg.CFrame = char.HumanoidRootPart.CFrame
+		bg.Parent = char.HumanoidRootPart
+		
+		bv = Instance.new("BodyVelocity")
+		bv.Velocity = Vector3.new(0, 0, 0)
+		bv.MaxForce = Vector3.new(9e4, 9e4, 9e4)
+		bv.Parent = char.HumanoidRootPart
+	else
+		if bg then bg:Destroy() end
+		if bv then bv:Destroy() end
+	end
+end)
+
+RunService.RenderStepped:Connect(function()
+	if flying and LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart") then
+		local char = LocalPlayer.Character
+		local cam = workspace.CurrentCamera
+		local speedVal = tonumber(FlySpeedBox.Text) or 50
+		flySpeed = math.clamp(speedVal, 1, 300)
+		
+		if bg and bv then
+			bg.CFrame = cam.CFrame
+			local moveDir = Vector3.new()
+			if UserInputService:IsKeyDown(Enum.KeyCode.W) then moveDir = moveDir + cam.CFrame.LookVector end
+			if UserInputService:IsKeyDown(Enum.KeyCode.S) then moveDir = moveDir - cam.CFrame.LookVector end
+			if UserInputService:IsKeyDown(Enum.KeyCode.A) then moveDir = moveDir - cam.CFrame.RightVector end
+			if UserInputService:IsKeyDown(Enum.KeyCode.D) then moveDir = moveDir + cam.CFrame.RightVector end
+			bv.Velocity = moveDir * flySpeed
+		end
+	end
+end)
+
+local hitboxEnabled = false
+HitboxBtn.MouseButton1Click:Connect(function()
+	hitboxEnabled = not hitboxEnabled
+	HitboxBtn.Text = "Toggle Hitbox: " .. (hitboxEnabled and "ON" or "OFF")
+	HitboxBtn.BackgroundColor3 = hitboxEnabled and Color3.fromRGB(0, 170, 127) or Color3.fromRGB(60, 60, 90)
+end)
+
+RunService.Heartbeat:Connect(function()
+	if hitboxEnabled then
+		local sizeVal = tonumber(HitboxBox.Text) or 2
+		for _, player in ipairs(Players:GetPlayers()) do
+			if player ~= LocalPlayer and player.Character and player.Character:FindFirstChild("HumanoidRootPart") then
+				local hrp = player.Character.HumanoidRootPart
+				hrp.Size = Vector3.new(sizeVal * 2, sizeVal * 2, sizeVal * 2)
+				hrp.Transparency = 0.7
+				hrp.CanCollide = false
+			end
+		end
+	end
+end)
+
+local invisEnabled = false
+InvisBtn.MouseButton1Click:Connect(function()
+	invisEnabled = not invisEnabled
+	InvisBtn.Text = "Toggle Invisibility: " .. (invisEnabled and "ON" or "OFF")
+	InvisBtn.BackgroundColor3 = invisEnabled and Color3.fromRGB(170, 0, 0) or Color3.fromRGB(90, 60, 60)
+	
+	local char = LocalPlayer.Character
+	if char then
+		for _, part in ipairs(char:GetDescendants()) do
+			if part:IsA("BasePart") and part.Name ~= "HumanoidRootPart" then
+				part.Transparency = invisEnabled and 1 or 0
+			elseif part:IsA("Decal") then
+				part.Transparency = invisEnabled and 1 or 0
+			end
+		end
+		for _, acc in ipairs(char:GetChildren()) do
+			if acc:IsA("Accessory") then
+				local handle = acc:FindFirstChild("Handle")
+				if handle then
+					handle.Transparency = invisEnabled and 1 or 0
+				end
+			end
+		end
+	end
+end)
