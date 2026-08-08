@@ -1,0 +1,264 @@
+local CoreGui = game:GetService("CoreGui")
+local Players = game:GetService("Players")
+local RunService = game:GetService("RunService")
+local Workspace = game:GetService("Workspace")
+
+local success, protectGui = pcall(function()
+    return gethui()
+end)
+local guiParent = success and protectGui or CoreGui
+
+if guiParent:FindFirstChild("AnimeBladeBallHub") then
+    guiParent.AnimeBladeBallHub:Destroy()
+end
+
+local player = Players.LocalPlayer
+local mouse = player:GetMouse()
+
+local screenGui = Instance.new("ScreenGui")
+screenGui.Name = "AnimeBladeBallHub"
+screenGui.Parent = guiParent
+screenGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
+
+local mainFrame = Instance.new("Frame")
+mainFrame.Name = "MainFrame"
+mainFrame.Size = UDim2.new(0, 480, 0, 320)
+mainFrame.Position = UDim2.new(0.5, -240, 0.5, -160)
+mainFrame.BackgroundColor3 = Color3.fromRGB(15, 12, 24)
+mainFrame.BorderSizePixel = 0
+mainFrame.Active = true
+mainFrame.Draggable = true
+mainFrame.Parent = screenGui
+
+local frameCorner = Instance.new("UICorner")
+frameCorner.CornerRadius = UDim.new(0, 12)
+frameCorner.Parent = mainFrame
+
+local stroke = Instance.new("UIStroke")
+stroke.Color = Color3.fromRGB(155, 44, 255)
+stroke.Thickness = 2
+stroke.Parent = mainFrame
+
+local topBar = Instance.new("Frame")
+topBar.Size = UDim2.new(1, 0, 0, 45)
+topBar.BackgroundColor3 = Color3.fromRGB(25, 20, 40)
+topBar.BorderSizePixel = 0
+topBar.Parent = mainFrame
+
+local topCorner = Instance.new("UICorner")
+topCorner.CornerRadius = UDim.new(0, 12)
+topCorner.Parent = topBar
+
+local titleLabel = Instance.new("TextLabel")
+titleLabel.Size = UDim2.new(1, -50, 1, 0)
+titleLabel.Position = UDim2.new(0, 15, 0, 0)
+titleLabel.BackgroundTransparency = 1
+titleLabel.TextColor3 = Color3.fromRGB(255, 105, 180)
+titleLabel.TextSize = 16
+titleLabel.Font = Enum.Font.GothamBold
+titleLabel.Text = "⚡ BLADE BALL // ANIME NEXUS"
+titleLabel.TextXAlignment = Enum.TextXAlignment.Left
+titleLabel.Parent = topBar
+
+local closeBtn = Instance.new("TextButton")
+closeBtn.Size = UDim2.new(0, 30, 0, 30)
+closeBtn.Position = UDim2.new(1, -38, 0, 7.5)
+closeBtn.BackgroundColor3 = Color3.fromRGB(230, 50, 80)
+closeBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+closeBtn.TextSize = 14
+closeBtn.Font = Enum.Font.GothamBold
+closeBtn.Text = "X"
+closeBtn.Parent = topBar
+
+local closeCorner = Instance.new("UICorner")
+closeCorner.CornerRadius = UDim.new(0, 8)
+closeCorner.Parent = closeBtn
+
+closeBtn.MouseButton1Click:Connect(function()
+    screenGui:Destroy()
+end)
+
+local container = Instance.new("ScrollingFrame")
+container.Size = UDim2.new(1, -20, 1, -60)
+container.Position = UDim2.new(0, 10, 0, 52)
+container.BackgroundTransparency = 1
+container.BorderSizePixel = 0
+container.CanvasSize = UDim2.new(0, 0, 0, 300)
+container.ScrollBarThickness = 4
+container.Parent = mainFrame
+
+local function createToggle(name, yPos, callback)
+    local btn = Instance.new("TextButton")
+    btn.Size = UDim2.new(1, 0, 0, 45)
+    btn.Position = UDim2.new(0, 0, 0, yPos)
+    btn.BackgroundColor3 = Color3.fromRGB(30, 25, 48)
+    btn.TextColor3 = Color3.fromRGB(220, 220, 240)
+    btn.TextSize = 14
+    btn.Font = Enum.Font.GothamSemibold
+    btn.Text = name .. ": [OFF]"
+    btn.Parent = container
+
+    local corner = Instance.new("UICorner")
+    corner.CornerRadius = UDim.new(0, 8)
+    corner.Parent = btn
+
+    local state = false
+    btn.MouseButton1Click:Connect(function()
+        state = not state
+        if state then
+            btn.Text = name .. ": [ON]"
+            btn.BackgroundColor3 = Color3.fromRGB(120, 40, 200)
+        else
+            btn.Text = name .. ": [OFF]"
+            btn.BackgroundColor3 = Color3.fromRGB(30, 25, 48)
+        end
+        callback(state)
+    end)
+end
+
+local function createSlider(name, min, default, max, yPos, callback)
+    local frame = Instance.new("Frame")
+    frame.Size = UDim2.new(1, 0, 0, 55)
+    frame.Position = UDim2.new(0, 0, 0, yPos)
+    frame.BackgroundColor3 = Color3.fromRGB(30, 25, 48)
+    frame.Parent = container
+
+    local corner = Instance.new("UICorner")
+    corner.CornerRadius = UDim.new(0, 8)
+    corner.Parent = frame
+
+    local label = Instance.new("TextLabel")
+    label.Size = UDim2.new(1, -20, 0, 25)
+    label.Position = UDim2.new(0, 10, 0, 5)
+    label.BackgroundTransparency = 1
+    label.TextColor3 = Color3.fromRGB(220, 220, 240)
+    label.TextSize = 13
+    label.Font = Enum.Font.GothamBold
+    label.Text = name .. ": " .. default
+    label.TextXAlignment = Enum.TextXAlignment.Left
+    label.Parent = frame
+
+    local sliderBg = Instance.new("TextButton")
+    sliderBg.Size = UDim2.new(1, -20, 0, 10)
+    sliderBg.Position = UDim2.new(0, 10, 0, 35)
+    sliderBg.BackgroundColor3 = Color3.fromRGB(50, 40, 75)
+    sliderBg.Text = ""
+    sliderBg.Parent = frame
+
+    local sliderCorner = Instance.new("UICorner")
+    sliderCorner.CornerRadius = UDim.new(1, 0)
+    sliderCorner.Parent = sliderBg
+
+    local fill = Instance.new("Frame")
+    fill.Size = UDim2.new((default - min) / (max - min), 0, 1, 0)
+    fill.BackgroundColor3 = Color3.fromRGB(255, 105, 180)
+    fill.BorderSizePixel = 0
+    fill.Parent = sliderBg
+
+    local fillCorner = Instance.new("UICorner")
+    fillCorner.CornerRadius = UDim.new(1, 0)
+    fillCorner.Parent = fill
+
+    local dragging = false
+    sliderBg.MouseButton1Down:Connect(function()
+        dragging = true
+    end)
+
+    game:GetService("UserInputService").InputEnded:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.MouseButton1 then
+            dragging = false
+        end
+    end)
+
+    RunService.RenderStepped:Connect(function()
+        if dragging then
+            local mousePos = mouse.X
+            local absPos = sliderBg.AbsolutePosition.X
+            local absSize = sliderBg.AbsoluteSize.X
+            local pos = math.clamp((mousePos - absPos) / absSize, 0, 1)
+            fill.Size = UDim2.new(pos, 0, 1, 0)
+            local val = math.floor(min + (max - min) * pos)
+            label.Text = name .. ": " .. val
+            callback(val)
+        end
+    end)
+end
+
+local autoParryActive = false
+createToggle("Auto Parry [Smart Prediction]", 0, function(state)
+    autoParryActive = state
+end)
+
+RunService.RenderStepped:Connect(function()
+    if not autoParryActive then return end
+    pcall(function()
+        local char = player.Character
+        if not char or not char:FindFirstChild("HumanoidRootPart") then return end
+        
+        local ballsFolder = Workspace:FindFirstChild("Balls")
+        if not ballsFolder then return end
+
+        for _, ball in pairs(ballsFolder:GetChildren()) do
+            if ball:IsA("BasePart") and ball.Transparency == 0 then
+                local dist = (ball.Position - char.HumanoidRootPart.Position).Magnitude
+                local velocity = ball.Velocity.Magnitude
+                local threshold = math.clamp(velocity * 0.35, 16, 32)
+                
+                if dist <= threshold then
+                    local vim = game:GetService("VirtualInputManager")
+                    if vim then
+                        vim:SendKeyEvent(true, Enum.KeyCode.F, false, game)
+                        task.wait(0.04)
+                        vim:SendKeyEvent(false, Enum.KeyCode.F, false, game)
+                    end
+                end
+            end
+        end
+    end)
+end)
+
+local customSpeed = 16
+local speedActive = false
+createToggle("Custom WalkSpeed (1-50)", 55, function(state)
+    speedActive = state
+    if not state and player.Character and player.Character:FindFirstChild("Humanoid") then
+        player.Character.Humanoid.WalkSpeed = 16
+    end
+end)
+
+createSlider("WalkSpeed Value", 1, 16, 50, 110, function(val)
+    customSpeed = val
+end)
+
+RunService.Heartbeat:Connect(function()
+    if speedActive and player.Character and player.Character:FindFirstChild("Humanoid") then
+        player.Character.Humanoid.WalkSpeed = customSpeed
+    end
+end)
+
+createToggle("Ball ESP [Highlight]", 175, function(state)
+    local ballsFolder = Workspace:FindFirstChild("Balls")
+    if not ballsFolder then return end
+    for _, ball in pairs(ballsFolder:GetChildren()) do
+        if state then
+            if not ball:FindFirstChild("Highlight") then
+                local hl = Instance.new("Highlight")
+                hl.Name = "Highlight"
+                hl.FillColor = Color3.fromRGB(255, 0, 120)
+                hl.OutlineColor = Color3.fromRGB(255, 255, 255)
+                hl.Parent = ball
+            end
+        else
+            if ball:FindFirstChild("Highlight") then
+                ball.Highlight:Destroy()
+            end
+        end
+    end
+end)
+
+local vu = game:GetService("VirtualUser")
+player.Idled:Connect(function()
+    vu:Button2Down(Vector2.new(0,0), workspace.CurrentCamera.CFrame)
+    task.wait(1)
+    vu:Button2Up(Vector2.new(0,0), workspace.CurrentCamera.CFrame)
+end)
