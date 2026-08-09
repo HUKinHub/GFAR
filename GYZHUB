@@ -1,0 +1,714 @@
+local Players = game:GetService("Players")
+local RunService = game:GetService("RunService")
+local UserInputService = game:GetService("UserInputService")
+local TweenService = game:GetService("TweenService")
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local Workspace = game:GetService("Workspace")
+local VirtualUser = game:GetService("VirtualUser")
+local CoreGui = game:GetService("CoreGui")
+
+local LocalPlayer = Players.LocalPlayer
+local Camera = Workspace.CurrentCamera
+
+-- Anti AFK (กันหลุดจากเกมเมื่อเปิดฟาร์มทิ้งไว้)
+LocalPlayer.Idled:Connect(function()
+    VirtualUser:CaptureController()
+    VirtualUser:ClickButton2(Vector2.new(0, 0))
+end)
+
+-- 2. Sea Detector
+local PlaceId = game.PlaceId
+local Sea1, Sea2, Sea3 = 2753915549, 4442272183, 7449423635
+local CurrentSea = 1
+if PlaceId == Sea2 then CurrentSea = 2 elseif PlaceId == Sea3 then CurrentSea = 3 end
+
+-- 3. Global Configuration (ตั้งค่าฟังก์ชั่นสคริปต์)
+getgenv().GZHUB = {
+    AutoFarm = {
+        Level = false,
+        Distance = 7,
+        FastAttack = true,
+        AutoEquip = true,
+        SelectedWeapon = "Melee", -- "Melee", "Sword", "Blox Fruit"
+        ChestFarm = false,
+        BossFarm = false,
+        MobGroup = false
+    },
+    Mastery = {
+        FruitMastery = false,
+        GunMastery = false,
+        SwordMastery = false,
+        HealthThreshold = 25
+    },
+    SeaEvents = {
+        AutoSeaBeast = false,
+        AutoShipRaid = false,
+        AutoTerrorShark = false
+    },
+    Stats = {
+        AutoMelee = false,
+        AutoDefense = false,
+        AutoSword = false,
+        AutoGun = false,
+        AutoBloxFruit = false,
+        PointCount = 3
+    },
+    Raid = {
+        AutoRaid = false,
+        AutoBuyChip = false,
+        SelectedChip = "Flame",
+        AutoAwaken = false
+    },
+    Fruit = {
+        AutoBuyFruit = false,
+        AutoStoreFruit = false,
+        FruitESP = false,
+        BringFruit = false
+    },
+    Combat = {
+        SilentAim = false,
+        TargetPart = "HumanoidRootPart",
+        ShowFOV = false,
+        FOVRadius = 160,
+        FOVColor = Color3.fromRGB(255, 0, 100),
+        FOVFilled = false
+    },
+    Player = {
+        WalkSpeedEnabled = false,
+        WalkSpeed = 50,
+        JumpPowerEnabled = false,
+        JumpPower = 100,
+        InfiniteJump = false,
+        InfiniteEnergy = false,
+        Noclip = false,
+        Fly = false
+    }
+}
+
+-- 4. FOV Circle Setup
+local FOVCircle = Drawing.new("Circle")
+FOVCircle.Thickness = 2
+FOVCircle.NumSides = 60
+FOVCircle.Radius = getgenv().GZHUB.Combat.FOVRadius
+FOVCircle.Filled = getgenv().GZHUB.Combat.FOVFilled
+FOVCircle.Visible = getgenv().GZHUB.Combat.ShowFOV
+FOVCircle.Color = getgenv().GZHUB.Combat.FOVColor
+FOVCircle.Transparency = 1
+
+RunService.RenderStepped:Connect(function()
+    FOVCircle.Visible = getgenv().GZHUB.Combat.ShowFOV
+    FOVCircle.Radius = getgenv().GZHUB.Combat.FOVRadius
+    FOVCircle.Color = getgenv().GZHUB.Combat.FOVColor
+    FOVCircle.Filled = getgenv().GZHUB.Combat.FOVFilled
+    local MousePos = UserInputService:GetMouseLocation()
+    FOVCircle.Position = Vector2.new(MousePos.X, MousePos.Y)
+end)
+
+-- 5. Helper Functions (Equip Weapon, Target Finder, Fast Attack)
+local function EquipWeapon(weaponType)
+    local Character = LocalPlayer.Character
+    if not Character then return end
+    local Backpack = LocalPlayer.Backpack
+
+    for _, tool in ipairs(Backpack:GetChildren()) do
+        if tool:IsA("Tool") then
+            local isMatch = false
+            if weaponType == "Melee" and tool.ToolTip == "Melee" then isMatch = true
+            elseif weaponType == "Sword" and tool.ToolTip == "Sword" then isMatch = true
+            elseif weaponType == "Blox Fruit" and (tool.ToolTip == "Blox Fruit" or tool.ToolTip == "Devil Fruit") then isMatch = true
+            elseif weaponType == "Gun" and tool.ToolTip == "Gun" then isMatch = true
+            end
+
+            if isMatch then
+                Character.Humanoid:EquipTool(tool)
+                break
+            end
+        end
+    end
+end
+
+local function Attack()
+    pcall(function()
+        VirtualUser:CaptureController()
+        VirtualUser:ClickButton1(Vector2.new(500, 500))
+        local Tool = LocalPlayer.Character and LocalPlayer.Character:FindFirstChildOfClass("Tool")
+        if Tool then Tool:Activate() end
+    end)
+end
+
+-- Auto Stats Engine
+task.spawn(function()
+    while task.wait(0.5) do
+        local CommF = ReplicatedStorage:FindFirstChild("Remotes") and ReplicatedStorage.Remotes:FindFirstChild("CommF_")
+        if CommF then
+            local stats = getgenv().GZHUB.Stats
+            local count = stats.PointCount
+            if stats.AutoMelee then CommF:InvokeServer("AddPoint", "Melee", count) end
+            if stats.AutoDefense then CommF:InvokeServer("AddPoint", "Defense", count) end
+            if stats.AutoSword then CommF:InvokeServer("AddPoint", "Sword", count) end
+            if stats.AutoGun then CommF:InvokeServer("AddPoint", "Gun", count) end
+            if stats.AutoBloxFruit then CommF:InvokeServer("AddPoint", "Demon Fruit", count) end
+        end
+    end
+end)
+
+-- Auto Store Fruit Engine
+task.spawn(function()
+    while task.wait(2) do
+        if getgenv().GZHUB.Fruit.AutoStoreFruit then
+            pcall(function()
+                local CommF = ReplicatedStorage:FindFirstChild("Remotes") and ReplicatedStorage.Remotes:FindFirstChild("CommF_")
+                if CommF then
+                    for _, tool in ipairs(LocalPlayer.Backpack:GetChildren()) do
+                        if tool:IsA("Tool") and string.find(tool.Name, "Fruit") then
+                            CommF:InvokeServer("StoreFruit", tool.Name, tool)
+                        end
+                    end
+                end
+            end)
+        end
+    end
+end)
+
+-- Player Speed / Jump Engine
+RunService.RenderStepped:Connect(function()
+    local Character = LocalPlayer.Character
+    if Character and Character:FindFirstChild("Humanoid") then
+        local Humanoid = Character.Humanoid
+        if getgenv().GZHUB.Player.WalkSpeedEnabled then
+            Humanoid.WalkSpeed = getgenv().GZHUB.Player.WalkSpeed
+        end
+        if getgenv().GZHUB.Player.JumpPowerEnabled then
+            Humanoid.UseJumpPower = true
+            Humanoid.JumpPower = getgenv().GZHUB.Player.JumpPower
+        end
+        if getgenv().GZHUB.Player.InfiniteEnergy then
+            local Energy = Character:FindFirstChild("Energy")
+            if Energy then Energy.Value = Energy.MaxValue end
+        end
+    end
+end)
+
+-- Infinite Jump
+UserInputService.JumpRequest:Connect(function()
+    if getgenv().GZHUB.Player.InfiniteJump then
+        local Character = LocalPlayer.Character
+        if Character and Character:FindFirstChild("Humanoid") then
+            Character.Humanoid:ChangeState(Enum.HumanoidStateType.Jumping)
+        end
+    end
+end)
+
+-- Noclip Engine
+RunService.Stepped:Connect(function()
+    if getgenv().GZHUB.AutoFarm.Level or getgenv().GZHUB.Player.Noclip then
+        local Character = LocalPlayer.Character
+        if Character then
+            for _, v in ipairs(Character:GetDescendants()) do
+                if v:IsA("BasePart") and v.CanCollide then
+                    v.CanCollide = false
+                end
+            end
+        end
+    end
+end)
+
+-- Auto Farm Level Logic
+local function GetTargetMob()
+    local Nearest = nil
+    local Dist = math.huge
+    local Character = LocalPlayer.Character
+    if not Character or not Character:FindFirstChild("HumanoidRootPart") then return nil end
+
+    local Enemies = Workspace:FindFirstChild("Enemies")
+    local TargetFolder = Enemies or Workspace
+
+    for _, mob in ipairs(TargetFolder:GetChildren()) do
+        if mob:IsA("Model") and mob ~= Character and mob:FindFirstChild("Humanoid") and mob:FindFirstChild("HumanoidRootPart") then
+            if mob.Humanoid.Health > 0 then
+                local d = (mob.HumanoidRootPart.Position - Character.HumanoidRootPart.Position).Magnitude
+                if d < Dist then
+                    Dist = d
+                    Nearest = mob
+                end
+            end
+        end
+    end
+    return Nearest
+end
+
+task.spawn(function()
+    while task.wait(0.1) do
+        if getgenv().GZHUB.AutoFarm.Level then
+            pcall(function()
+                local Target = GetTargetMob()
+                local Character = LocalPlayer.Character
+                if Target and Character and Character:FindFirstChild("HumanoidRootPart") then
+                    if getgenv().GZHUB.AutoFarm.AutoEquip then
+                        EquipWeapon(getgenv().GZHUB.AutoFarm.SelectedWeapon)
+                    end
+
+                    -- Fast positioning above mob
+                    Character.HumanoidRootPart.CFrame = Target.HumanoidRootPart.CFrame * CFrame.new(0, getgenv().GZHUB.AutoFarm.Distance, 0) * CFrame.Angles(math.rad(-90), 0, 0)
+
+                    if getgenv().GZHUB.AutoFarm.FastAttack then
+                        Attack()
+                    end
+                end
+            end)
+        end
+    end
+end)
+
+-- 6. CUSTOM GZHUB GUI SETUP (ขอบรุ้งวิ่งอ้อม + ปุ่มเปิด/ปิด GZ byGC สายรุ้ง)
+
+-- Remove Old UI if exists
+if CoreGui:FindFirstChild("GZHUB_GUI") then CoreGui.GZHUB_GUI:Destroy() end
+if LocalPlayer.PlayerGui:FindFirstChild("GZHUB_GUI") then LocalPlayer.PlayerGui.GZHUB_GUI:Destroy() end
+
+local ScreenGui = Instance.new("ScreenGui")
+ScreenGui.Name = "GZHUB_GUI"
+ScreenGui.ResetOnSpawn = false
+ScreenGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
+
+local ParentTarget = (gethui and gethui()) or CoreGui or LocalPlayer:WaitForChild("PlayerGui")
+ScreenGui.Parent = ParentTarget
+
+-- Rainbow Helper Function
+local ColorSequencePoints = {
+    ColorSequenceKeypoint.new(0, Color3.fromRGB(255, 0, 0)),
+    ColorSequenceKeypoint.new(0.16, Color3.fromRGB(255, 150, 0)),
+    ColorSequenceKeypoint.new(0.33, Color3.fromRGB(255, 255, 0)),
+    ColorSequenceKeypoint.new(0.5, Color3.fromRGB(0, 255, 100)),
+    ColorSequenceKeypoint.new(0.66, Color3.fromRGB(0, 180, 255)),
+    ColorSequenceKeypoint.new(0.83, Color3.fromRGB(150, 0, 255)),
+    ColorSequenceKeypoint.new(1, Color3.fromRGB(255, 0, 0))
+}
+
+-- OPEN/CLOSE TOGGLE BUTTON ("GZ byGC" Rainbow Text)
+local ToggleButton = Instance.new("TextButton")
+ToggleButton.Name = "GZ_ToggleButton"
+ToggleButton.Size = UDim2.new(0, 135, 0, 42)
+ToggleButton.Position = UDim2.new(0, 15, 0.3, 0)
+ToggleButton.BackgroundColor3 = Color3.fromRGB(18, 20, 28)
+ToggleButton.BorderSizePixel = 0
+ToggleButton.Active = true
+ToggleButton.Draggable = true
+ToggleButton.AutoButtonColor = false
+ToggleButton.Text = "GZ byGC"
+ToggleButton.Font = Enum.Font.FredokaOne
+ToggleButton.TextSize = 20
+ToggleButton.Parent = ScreenGui
+
+local ToggleCorner = Instance.new("UICorner")
+ToggleCorner.CornerRadius = UDim.new(0, 10)
+ToggleCorner.Parent = ToggleButton
+
+local ToggleStroke = Instance.new("UIStroke")
+ToggleStroke.Thickness = 2.5
+ToggleStroke.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
+ToggleStroke.Parent = ToggleButton
+
+local ToggleStrokeGradient = Instance.new("UIGradient")
+ToggleStrokeGradient.Color = ColorSequence.new(ColorSequencePoints)
+ToggleStrokeGradient.Parent = ToggleStroke
+
+-- MAIN UI WINDOW (GZHUB)
+local MainFrame = Instance.new("Frame")
+MainFrame.Name = "MainFrame"
+MainFrame.Size = UDim2.new(0, 620, 0, 420)
+MainFrame.Position = UDim2.new(0.5, -310, 0.5, -210)
+MainFrame.BackgroundColor3 = Color3.fromRGB(15, 17, 24)
+MainFrame.BorderSizePixel = 0
+MainFrame.Active = true
+MainFrame.Draggable = true
+MainFrame.Parent = ScreenGui
+
+local MainCorner = Instance.new("UICorner")
+MainCorner.CornerRadius = UDim.new(0, 14)
+MainCorner.Parent = MainFrame
+
+-- RAINBOW RUNNING BORDER (ขอบรุ้งวิ่งอ้อม)
+local RainbowStroke = Instance.new("UIStroke")
+RainbowStroke.Name = "RainbowRunningBorder"
+RainbowStroke.Thickness = 3.5
+RainbowStroke.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
+RainbowStroke.Parent = MainFrame
+
+local RainbowGradient = Instance.new("UIGradient")
+RainbowGradient.Name = "BorderGradient"
+RainbowGradient.Color = ColorSequence.new(ColorSequencePoints)
+RainbowGradient.Parent = RainbowStroke
+
+-- ROTATING RAINBOW BORDER ANIMATION LOOP
+RunService.RenderStepped:Connect(function()
+    local rainbowColor = Color3.fromHSV((tick() * 0.6) % 1, 0.9, 1)
+    ToggleButton.TextColor3 = rainbowColor
+    
+    -- Rotate Rainbow Border around UI (ขอบรุ้งวิ่งอ้อม)
+    RainbowGradient.Rotation = (RainbowGradient.Rotation + 2.5) % 360
+    ToggleStrokeGradient.Rotation = (ToggleStrokeGradient.Rotation + 3) % 360
+end)
+
+-- HEADER BAR
+local Header = Instance.new("Frame")
+Header.Name = "Header"
+Header.Size = UDim2.new(1, 0, 0, 45)
+Header.BackgroundColor3 = Color3.fromRGB(22, 25, 36)
+Header.BorderSizePixel = 0
+Header.Parent = MainFrame
+
+local HeaderCorner = Instance.new("UICorner")
+HeaderCorner.CornerRadius = UDim.new(0, 14)
+HeaderCorner.Parent = Header
+
+local Title = Instance.new("TextLabel")
+Title.Size = UDim2.new(0, 300, 1, 0)
+Title.Position = UDim2.new(0, 18, 0, 0)
+Title.BackgroundTransparency = 1
+Title.Text = "GZHUB | Blox Fruits"
+Title.Font = Enum.Font.FredokaOne
+Title.TextSize = 20
+Title.TextColor3 = Color3.fromRGB(255, 255, 255)
+Title.TextXAlignment = Enum.TextXAlignment.Left
+Title.Parent = Header
+
+local Subtitle = Instance.new("TextLabel")
+Subtitle.Size = UDim2.new(0, 150, 1, 0)
+Subtitle.Position = UDim2.new(0, 230, 0, 0)
+Subtitle.BackgroundTransparency = 1
+Subtitle.Text = "by GC"
+Subtitle.Font = Enum.Font.GothamBold
+Subtitle.TextSize = 13
+Subtitle.TextColor3 = Color3.fromRGB(0, 230, 255)
+Subtitle.TextXAlignment = Enum.TextXAlignment.Left
+Subtitle.Parent = Header
+
+-- Close Button
+local CloseBtn = Instance.new("TextButton")
+CloseBtn.Size = UDim2.new(0, 30, 0, 30)
+CloseBtn.Position = UDim2.new(1, -38, 0.5, -15)
+CloseBtn.BackgroundColor3 = Color3.fromRGB(255, 55, 80)
+CloseBtn.Text = "X"
+CloseBtn.Font = Enum.Font.GothamBold
+CloseBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+CloseBtn.TextSize = 14
+CloseBtn.Parent = Header
+
+local CloseCorner = Instance.new("UICorner")
+CloseCorner.CornerRadius = UDim.new(0, 8)
+CloseCorner.Parent = CloseBtn
+
+CloseBtn.MouseButton1Click:Connect(function()
+    MainFrame.Visible = false
+end)
+
+-- Toggle UI Function
+ToggleButton.MouseButton1Click:Connect(function()
+    MainFrame.Visible = not MainFrame.Visible
+end)
+
+-- SIDEBAR TABS SYSTEM
+local Sidebar = Instance.new("Frame")
+Sidebar.Size = UDim2.new(0, 150, 1, -55)
+Sidebar.Position = UDim2.new(0, 8, 0, 50)
+Sidebar.BackgroundColor3 = Color3.fromRGB(20, 22, 32)
+Sidebar.BorderSizePixel = 0
+Sidebar.Parent = MainFrame
+
+local SidebarCorner = Instance.new("UICorner")
+SidebarCorner.CornerRadius = UDim.new(0, 10)
+SidebarCorner.Parent = Sidebar
+
+local TabContainer = Instance.new("Frame")
+TabContainer.Size = UDim2.new(1, -170, 1, -55)
+TabContainer.Position = UDim2.new(0, 163, 0, 50)
+TabContainer.BackgroundColor3 = Color3.fromRGB(20, 22, 32)
+TabContainer.BorderSizePixel = 0
+TabContainer.Parent = MainFrame
+
+local ContainerCorner = Instance.new("UICorner")
+ContainerCorner.CornerRadius = UDim.new(0, 10)
+ContainerCorner.Parent = TabContainer
+
+-- Tab list & page instances (ข้อความคลีน ไม่มีอิโมจิ)
+local Tabs = {"ฟาร์มเลเวล", "อาวุธ/สแตท", "ผลปีศาจ", "PvP & Aim", "ตัวละคร", "วาปย้ายเกาะ"}
+local TabPages = {}
+local TabButtons = {}
+
+local TabListLayout = Instance.new("UIListLayout")
+TabListLayout.SortOrder = Enum.SortOrder.LayoutOrder
+TabListLayout.Padding = UDim.new(0, 5)
+TabListLayout.Parent = Sidebar
+
+local TabPadding = Instance.new("UIPadding")
+TabPadding.PaddingTop = UDim.new(0, 8)
+TabPadding.PaddingLeft = UDim.new(0, 6)
+TabPadding.PaddingRight = UDim.new(0, 6)
+TabPadding.Parent = Sidebar
+
+for i, tabName in ipairs(Tabs) do
+    local btn = Instance.new("TextButton")
+    btn.Size = UDim2.new(1, 0, 0, 36)
+    btn.BackgroundColor3 = i == 1 and Color3.fromRGB(40, 45, 65) or Color3.fromRGB(26, 28, 40)
+    btn.Text = tabName
+    btn.Font = Enum.Font.GothamMedium
+    btn.TextColor3 = Color3.fromRGB(240, 240, 240)
+    btn.TextSize = 13
+    btn.Parent = Sidebar
+
+    local btnCorner = Instance.new("UICorner")
+    btnCorner.CornerRadius = UDim.new(0, 8)
+    btnCorner.Parent = btn
+
+    -- Create Page
+    local page = Instance.new("ScrollingFrame")
+    page.Size = UDim2.new(1, -16, 1, -16)
+    page.Position = UDim2.new(0, 8, 0, 8)
+    page.BackgroundTransparency = 1
+    page.ScrollBarThickness = 4
+    page.Visible = (i == 1)
+    page.Parent = TabContainer
+
+    local pageLayout = Instance.new("UIListLayout")
+    pageLayout.SortOrder = Enum.SortOrder.LayoutOrder
+    pageLayout.Padding = UDim.new(0, 8)
+    pageLayout.Parent = page
+
+    TabPages[i] = page
+    TabButtons[i] = btn
+
+    btn.MouseButton1Click:Connect(function()
+        for j, p in ipairs(TabPages) do
+            p.Visible = (j == i)
+            TabButtons[j].BackgroundColor3 = (j == i) and Color3.fromRGB(40, 45, 65) or Color3.fromRGB(26, 28, 40)
+        end
+    end)
+end
+
+-- UI HELPER CREATORS (Toggle, Slider, Button)
+local function CreateToggle(parent, text, defaultState, callback)
+    local frame = Instance.new("Frame")
+    frame.Size = UDim2.new(1, 0, 0, 42)
+    frame.BackgroundColor3 = Color3.fromRGB(28, 32, 46)
+    frame.Parent = parent
+
+    local corner = Instance.new("UICorner")
+    corner.CornerRadius = UDim.new(0, 8)
+    corner.Parent = frame
+
+    local label = Instance.new("TextLabel")
+    label.Size = UDim2.new(0.7, 0, 1, 0)
+    label.Position = UDim2.new(0, 12, 0, 0)
+    label.BackgroundTransparency = 1
+    label.Text = text
+    label.Font = Enum.Font.GothamMedium
+    label.TextColor3 = Color3.fromRGB(240, 240, 240)
+    label.TextSize = 13
+    label.TextXAlignment = Enum.TextXAlignment.Left
+    label.Parent = frame
+
+    local switch = Instance.new("TextButton")
+    switch.Size = UDim2.new(0, 50, 0, 24)
+    switch.Position = UDim2.new(1, -60, 0.5, -12)
+    switch.BackgroundColor3 = defaultState and Color3.fromRGB(0, 200, 120) or Color3.fromRGB(60, 65, 80)
+    switch.Text = defaultState and "ON" or "OFF"
+    switch.Font = Enum.Font.GothamBold
+    switch.TextColor3 = Color3.fromRGB(255, 255, 255)
+    switch.TextSize = 11
+    switch.Parent = frame
+
+    local switchCorner = Instance.new("UICorner")
+    switchCorner.CornerRadius = UDim.new(0, 12)
+    switchCorner.Parent = switch
+
+    local state = defaultState
+    switch.MouseButton1Click:Connect(function()
+        state = not state
+        switch.BackgroundColor3 = state and Color3.fromRGB(0, 200, 120) or Color3.fromRGB(60, 65, 80)
+        switch.Text = state and "ON" or "OFF"
+        callback(state)
+    end)
+    return frame
+end
+
+local function CreateSlider(parent, text, min, max, default, callback)
+    local frame = Instance.new("Frame")
+    frame.Size = UDim2.new(1, 0, 0, 50)
+    frame.BackgroundColor3 = Color3.fromRGB(28, 32, 46)
+    frame.Parent = parent
+
+    local corner = Instance.new("UICorner")
+    corner.CornerRadius = UDim.new(0, 8)
+    corner.Parent = frame
+
+    local label = Instance.new("TextLabel")
+    label.Size = UDim2.new(1, -20, 0, 20)
+    label.Position = UDim2.new(0, 12, 0, 5)
+    label.BackgroundTransparency = 1
+    label.Text = text .. ": " .. tostring(default)
+    label.Font = Enum.Font.GothamMedium
+    label.TextColor3 = Color3.fromRGB(240, 240, 240)
+    label.TextSize = 12
+    label.TextXAlignment = Enum.TextXAlignment.Left
+    label.Parent = frame
+
+    local sliderBack = Instance.new("TextButton")
+    sliderBack.Size = UDim2.new(1, -24, 0, 10)
+    sliderBack.Position = UDim2.new(0, 12, 0, 30)
+    sliderBack.BackgroundColor3 = Color3.fromRGB(45, 50, 65)
+    sliderBack.Text = ""
+    sliderBack.AutoButtonColor = false
+    sliderBack.Parent = frame
+
+    local sliderCorner = Instance.new("UICorner")
+    sliderCorner.CornerRadius = UDim.new(0, 5)
+    sliderCorner.Parent = sliderBack
+
+    local sliderFill = Instance.new("Frame")
+    local pct = (default - min) / (max - min)
+    sliderFill.Size = UDim2.new(pct, 0, 1, 0)
+    sliderFill.BackgroundColor3 = Color3.fromRGB(0, 180, 255)
+    sliderFill.BorderSizePixel = 0
+    sliderFill.Parent = sliderBack
+
+    local fillCorner = Instance.new("UICorner")
+    fillCorner.CornerRadius = UDim.new(0, 5)
+    fillCorner.Parent = sliderFill
+
+    local isDragging = false
+    local function UpdateSlider(input)
+        local pos = math.clamp((input.Position.X - sliderBack.AbsolutePosition.X) / sliderBack.AbsoluteSize.X, 0, 1)
+        sliderFill.Size = UDim2.new(pos, 0, 1, 0)
+        local val = math.floor(min + (max - min) * pos)
+        label.Text = text .. ": " .. tostring(val)
+        callback(val)
+    end
+
+    sliderBack.InputBegan:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+            isDragging = true
+            UpdateSlider(input)
+        end
+    end)
+
+    UserInputService.InputChanged:Connect(function(input)
+        if isDragging and (input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch) then
+            UpdateSlider(input)
+        end
+    end)
+
+    UserInputService.InputEnded:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+            isDragging = false
+        end
+    end)
+end
+
+local function CreateButton(parent, text, callback)
+    local btn = Instance.new("TextButton")
+    btn.Size = UDim2.new(1, 0, 0, 38)
+    btn.BackgroundColor3 = Color3.fromRGB(0, 140, 240)
+    btn.Text = text
+    btn.Font = Enum.Font.GothamBold
+    btn.TextColor3 = Color3.fromRGB(255, 255, 255)
+    btn.TextSize = 13
+    btn.Parent = parent
+
+    local corner = Instance.new("UICorner")
+    corner.CornerRadius = UDim.new(0, 8)
+    corner.Parent = btn
+
+    btn.MouseButton1Click:Connect(callback)
+end
+
+-- POPULATE TABS WITH BLOX FRUITS FEATURES
+
+-- PAGE 1: AUTO FARM
+local p1 = TabPages[1]
+CreateToggle(p1, "เปิดใช้งาน ออโต้ฟาร์มเลเวล (Auto Farm Level)", false, function(v)
+    getgenv().GZHUB.AutoFarm.Level = v
+end)
+CreateSlider(p1, "ระยะห่างตัวละครกับมอนสเตอร์ (Distance)", 3, 15, 7, function(v)
+    getgenv().GZHUB.AutoFarm.Distance = v
+end)
+CreateToggle(p1, "ถืออาวุธอัตโนมัติ (Auto Equip Weapon)", true, function(v)
+    getgenv().GZHUB.AutoFarm.AutoEquip = v
+end)
+CreateToggle(p1, "โจมตีเร็ว (Fast Attack)", true, function(v)
+    getgenv().GZHUB.AutoFarm.FastAttack = v
+end)
+CreateToggle(p1, "ออโต้เก็บกล่องสมบัติ (Chest Farm)", false, function(v)
+    getgenv().GZHUB.AutoFarm.ChestFarm = v
+end)
+
+-- PAGE 2: WEAPON & STATS
+local p2 = TabPages[2]
+CreateToggle(p2, "ออโต้ลงสแตท Melee", false, function(v) getgenv().GZHUB.Stats.AutoMelee = v end)
+CreateToggle(p2, "ออโต้ลงสแตท Defense", false, function(v) getgenv().GZHUB.Stats.AutoDefense = v end)
+CreateToggle(p2, "ออโต้ลงสแตท Sword", false, function(v) getgenv().GZHUB.Stats.AutoSword = v end)
+CreateToggle(p2, "ออโต้ลงสแตท Blox Fruit", false, function(v) getgenv().GZHUB.Stats.AutoBloxFruit = v end)
+
+-- PAGE 3: BLOX FRUIT SYSTEM
+local p3 = TabPages[3]
+CreateButton(p3, "สุ่มผลปีศาจอัตโนมัติ (Random Fruit)", function()
+    pcall(function()
+        ReplicatedStorage.Remotes.CommF_:InvokeServer("Cousin", "Buy")
+    end)
+end)
+CreateToggle(p3, "ออโต้เก็บผลเข้ากระเป๋า (Auto Store Fruit)", true, function(v)
+    getgenv().GZHUB.Fruit.AutoStoreFruit = v
+end)
+
+-- PAGE 4: PVP & AIMBOT
+local p4 = TabPages[4]
+CreateToggle(p4, "เปิดใช้งาน Silent Aim", false, function(v)
+    getgenv().GZHUB.Combat.SilentAim = v
+end)
+CreateToggle(p4, "แสดงวงกลม FOV ตรงกลางหน้าจอ", false, function(v)
+    getgenv().GZHUB.Combat.ShowFOV = v
+end)
+CreateSlider(p4, "ขนาดรัศมีวงกลม FOV", 50, 400, 160, function(v)
+    getgenv().GZHUB.Combat.FOVRadius = v
+end)
+
+-- PAGE 5: PLAYER MODS
+local p5 = TabPages[5]
+CreateToggle(p5, "เพิ่มความเร็วการวิ่ง (Speed)", false, function(v)
+    getgenv().GZHUB.Player.WalkSpeedEnabled = v
+    if not v and LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("Humanoid") then
+        LocalPlayer.Character.Humanoid.WalkSpeed = 16
+    end
+end)
+CreateSlider(p5, "ระดับความเร็ว (WalkSpeed)", 16, 300, 50, function(v)
+    getgenv().GZHUB.Player.WalkSpeed = v
+end)
+CreateToggle(p5, "เปิดกระโดดสูง (JumpPower)", false, function(v)
+    getgenv().GZHUB.Player.JumpPowerEnabled = v
+    if not v and LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("Humanoid") then
+        LocalPlayer.Character.Humanoid.JumpPower = 50
+    end
+end)
+CreateSlider(p5, "ระดับความสูงกระโดด", 50, 300, 100, function(v)
+    getgenv().GZHUB.Player.JumpPower = v
+end)
+CreateToggle(p5, "กระโดดได้ไม่จำกัด (Infinite Jump)", false, function(v)
+    getgenv().GZHUB.Player.InfiniteJump = v
+end)
+CreateToggle(p5, "พลังงานไม่จำกัด (Infinite Energy)", false, function(v)
+    getgenv().GZHUB.Player.InfiniteEnergy = v
+end)
+
+-- PAGE 6: TELEPORT
+local p6 = TabPages[6]
+CreateButton(p6, "วาปไป Sea 1 (First Sea)", function()
+    ReplicatedStorage.Remotes.CommF_:InvokeServer("TravelMain")
+end)
+CreateButton(p6, "วาปไป Sea 2 (Second Sea)", function()
+    ReplicatedStorage.Remotes.CommF_:InvokeServer("TravelDressrosa")
+end)
+CreateButton(p6, "วาปไป Sea 3 (Third Sea)", function()
+    ReplicatedStorage.Remotes.CommF_:InvokeServer("TravelZou")
+end)
+
+print("GZHUB Blox Fruits Loaded Successfully! Created by GC")
