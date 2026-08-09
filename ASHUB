@@ -1,0 +1,379 @@
+local Players = game:GetService("Players")
+local player = Players.LocalPlayer
+local playerGui = player:WaitForChild("PlayerGui")
+
+if playerGui:FindFirstChild("GZGui") then
+    playerGui.GZGui:Destroy()
+end
+
+local screenGui = Instance.new("ScreenGui")
+screenGui.Name = "GZGui"
+screenGui.ResetOnSpawn = false
+screenGui.Parent = playerGui
+
+local toggleButton = Instance.new("TextButton")
+toggleButton.Size = UDim2.new(0, 70, 0, 70)
+toggleButton.Position = UDim2.new(0, 20, 0, 150)
+toggleButton.BackgroundColor3 = Color3.fromRGB(255, 182, 193)
+toggleButton.TextColor3 = Color3.fromRGB(255, 255, 255)
+toggleButton.TextSize = 13
+toggleButton.Font = Enum.Font.SourceSansBold
+toggleButton.Text = "GZ\nby GC"
+toggleButton.Active = true
+toggleButton.Draggable = true
+toggleButton.Parent = screenGui
+
+local toggleCorner = Instance.new("UICorner")
+toggleCorner.CornerRadius = UDim.new(1, 0)
+toggleCorner.Parent = toggleButton
+
+local toggleGradient = Instance.new("UIGradient")
+toggleGradient.Color = ColorSequence.new({
+    ColorSequenceKeypoint.new(0, Color3.fromRGB(255, 182, 193)),
+    ColorSequenceKeypoint.new(0.5, Color3.fromRGB(221, 160, 221)),
+    ColorSequenceKeypoint.new(1, Color3.fromRGB(176, 224, 230))
+})
+toggleGradient.Parent = toggleButton
+
+local mainFrame = Instance.new("Frame")
+mainFrame.Size = UDim2.new(0, 340, 0, 420)
+mainFrame.Position = UDim2.new(0.5, -170, 0.5, -210)
+mainFrame.BackgroundColor3 = Color3.fromRGB(35, 25, 40)
+mainFrame.BorderSizePixel = 0
+mainFrame.Visible = false
+mainFrame.Active = true
+mainFrame.Draggable = true
+mainFrame.Parent = screenGui
+
+local mainCorner = Instance.new("UICorner")
+mainCorner.CornerRadius = UDim.new(0, 12)
+mainCorner.Parent = mainFrame
+
+local titleLabel = Instance.new("TextLabel")
+titleLabel.Size = UDim2.new(1, 0, 0, 40)
+titleLabel.BackgroundColor3 = Color3.fromRGB(50, 35, 60)
+titleLabel.TextColor3 = Color3.fromRGB(255, 192, 203)
+titleLabel.TextSize = 15
+titleLabel.Font = Enum.Font.SourceSansBold
+titleLabel.Text = " GZ Menu | Anime Edition (by GC) "
+titleLabel.TextXAlignment = Enum.TextXAlignment.Left
+titleLabel.Parent = mainFrame
+
+local titleCorner = Instance.new("UICorner")
+titleCorner.CornerRadius = UDim.new(0, 12)
+titleCorner.Parent = titleLabel
+
+toggleButton.MouseButton1Click:Connect(function()
+    mainFrame.Visible = not mainFrame.Visible
+end)
+
+local scrollingFrame = Instance.new("ScrollingFrame")
+scrollingFrame.Size = UDim2.new(1, -10, 1, -50)
+scrollingFrame.Position = UDim2.new(0, 5, 0, 45)
+scrollingFrame.BackgroundTransparency = 1
+scrollingFrame.CanvasSize = UDim2.new(0, 0, 0, 0)
+scrollingFrame.AutomaticCanvasSize = Enum.AutomaticSize.Y
+scrollingFrame.ScrollBarThickness = 6
+scrollingFrame.Parent = mainFrame
+
+local uiListLayout = Instance.new("UIListLayout")
+uiListLayout.SortOrder = Enum.SortOrder.LayoutIndex
+uiListLayout.Padding = UDim.new(0, 8)
+uiListLayout.Parent = scrollingFrame
+
+local function createInputFeature(name, defaultVal, onValueChanged)
+    local container = Instance.new("Frame")
+    container.Size = UDim2.new(0, 315, 0, 36)
+    container.BackgroundTransparency = 1
+    container.Parent = scrollingFrame
+
+    local label = Instance.new("TextLabel")
+    label.Size = UDim2.new(0, 140, 1, 0)
+    label.Position = UDim2.new(0, 10, 0, 0)
+    label.BackgroundTransparency = 1
+    label.TextColor3 = Color3.fromRGB(240, 220, 245)
+    label.TextSize = 13
+    label.Font = Enum.Font.SourceSansSemibold
+    label.Text = name
+    label.TextXAlignment = Enum.TextXAlignment.Left
+    label.Parent = container
+
+    local textBox = Instance.new("TextBox")
+    textBox.Size = UDim2.new(0, 50, 0, 28)
+    textBox.Position = UDim2.new(0, 150, 0, 4)
+    textBox.BackgroundColor3 = Color3.fromRGB(50, 40, 60)
+    textBox.TextColor3 = Color3.fromRGB(255, 255, 255)
+    textBox.TextSize = 12
+    textBox.Font = Enum.Font.SourceSans
+    textBox.Text = tostring(defaultVal)
+    textBox.Parent = container
+
+    local tbCorner = Instance.new("UICorner")
+    tbCorner.CornerRadius = UDim.new(0, 6)
+    tbCorner.Parent = textBox
+
+    local toggleBtn = Instance.new("TextButton")
+    toggleBtn.Size = UDim2.new(0, 85, 0, 28)
+    toggleBtn.Position = UDim2.new(0, 210, 0, 4)
+    toggleBtn.BackgroundColor3 = Color3.fromRGB(180, 60, 80)
+    toggleBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+    toggleBtn.TextSize = 12
+    toggleBtn.Font = Enum.Font.SourceSansBold
+    toggleBtn.Text = "OFF"
+    toggleBtn.Parent = container
+
+    local tBtnCorner = Instance.new("UICorner")
+    tBtnCorner.CornerRadius = UDim.new(0, 6)
+    tBtnCorner.Parent = toggleBtn
+
+    local active = false
+    toggleBtn.MouseButton1Click:Connect(function()
+        active = not active
+        if active then
+            toggleBtn.Text = "ON"
+            toggleBtn.BackgroundColor3 = Color3.fromRGB(80, 180, 120)
+        else
+            toggleBtn.Text = "OFF"
+            toggleBtn.BackgroundColor3 = Color3.fromRGB(180, 60, 80)
+        end
+        onValueChanged(active, tonumber(textBox.Text) or defaultVal)
+    end)
+end
+
+local function createToggleFeature(name, onToggled)
+    local container = Instance.new("Frame")
+    container.Size = UDim2.new(0, 315, 0, 36)
+    container.BackgroundTransparency = 1
+    container.Parent = scrollingFrame
+
+    local label = Instance.new("TextLabel")
+    label.Size = UDim2.new(0, 180, 1, 0)
+    label.Position = UDim2.new(0, 10, 0, 0)
+    label.BackgroundTransparency = 1
+    label.TextColor3 = Color3.fromRGB(240, 220, 245)
+    label.TextSize = 13
+    label.Font = Enum.Font.SourceSansSemibold
+    label.Text = name
+    label.TextXAlignment = Enum.TextXAlignment.Left
+    label.Parent = container
+
+    local toggleBtn = Instance.new("TextButton")
+    toggleBtn.Size = UDim2.new(0, 95, 0, 28)
+    toggleBtn.Position = UDim2.new(0, 200, 0, 4)
+    toggleBtn.BackgroundColor3 = Color3.fromRGB(180, 60, 80)
+    toggleBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+    toggleBtn.TextSize = 12
+    toggleBtn.Font = Enum.Font.SourceSansBold
+    toggleBtn.Text = "OFF"
+    toggleBtn.Parent = container
+
+    local btnCorner = Instance.new("UICorner")
+    btnCorner.CornerRadius = UDim.new(0, 6)
+    btnCorner.Parent = toggleBtn
+
+    local active = false
+    toggleBtn.MouseButton1Click:Connect(function()
+        active = not active
+        if active then
+            toggleBtn.Text = "ON"
+            toggleBtn.BackgroundColor3 = Color3.fromRGB(80, 180, 120)
+        else
+            toggleBtn.Text = "OFF"
+            toggleBtn.BackgroundColor3 = Color3.fromRGB(180, 60, 80)
+        end
+        onToggled(active)
+    end)
+end
+
+local function createButtonFeature(name, callback)
+    local container = Instance.new("Frame")
+    container.Size = UDim2.new(0, 315, 0, 36)
+    container.BackgroundTransparency = 1
+    container.Parent = scrollingFrame
+
+    local label = Instance.new("TextLabel")
+    label.Size = UDim2.new(0, 180, 1, 0)
+    label.Position = UDim2.new(0, 10, 0, 0)
+    label.BackgroundTransparency = 1
+    label.TextColor3 = Color3.fromRGB(240, 220, 245)
+    label.TextSize = 13
+    label.Font = Enum.Font.SourceSansSemibold
+    label.Text = name
+    label.TextXAlignment = Enum.TextXAlignment.Left
+    label.Parent = container
+
+    local btn = Instance.new("TextButton")
+    btn.Size = UDim2.new(0, 95, 0, 28)
+    btn.Position = UDim2.new(0, 200, 0, 4)
+    btn.BackgroundColor3 = Color3.fromRGB(200, 100, 180)
+    btn.TextColor3 = Color3.fromRGB(255, 255, 255)
+    btn.TextSize = 12
+    btn.Font = Enum.Font.SourceSansBold
+    btn.Text = "GET / TP"
+    btn.Parent = container
+
+    local btnCorner = Instance.new("UICorner")
+    btnCorner.CornerRadius = UDim.new(0, 6)
+    btnCorner.Parent = btn
+
+    btn.MouseButton1Click:Connect(callback)
+end
+
+createInputFeature("Move Speed", 28, function(active, val)
+    task.spawn(function()
+        while active and task.wait(0.1) do
+            local char = player.Character
+            if char and char:FindFirstChild("Humanoid") then
+                char.Humanoid.WalkSpeed = val
+            end
+        end
+    end)
+end)
+
+createToggleFeature("Anti-Kick Protection", function(active)
+    if active then
+        pcall(function()
+            local mt = getrawmetatable(game)
+            setreadonly(mt, false)
+            local old = mt.__namecall
+            mt.__namecall = newcclosure(function(self, ...)
+                local method = getnamecallmethod()
+                if method == "Kick" or method == "kick" then
+                    return
+                end
+                return old(self, ...)
+            end)
+            setreadonly(mt, true)
+        end)
+    end
+end)
+
+createInputFeature("Hitbox Size", 7, function(active, val)
+    task.spawn(function()
+        while active and task.wait(0.5) do
+            for _, p in ipairs(Players:GetPlayers()) do
+                if p ~= player and p.Character and p.Character:FindFirstChild("HumanoidRootPart") then
+                    local hrp = p.Character.HumanoidRootPart
+                    hrp.Size = Vector3.new(val, val, val)
+                    hrp.Transparency = 0.6
+                    hrp.CanCollide = false
+                    
+                    if not hrp:FindFirstChild("GZHitboxVisual") then
+                        local sb = Instance.new("SelectionBox")
+                        sb.Name = "GZHitboxVisual"
+                        sb.Adornee = hrp
+                        sb.Color3 = Color3.fromRGB(135, 206, 250)
+                        sb.LineThickness = 0.05
+                        sb.Parent = hrp
+                    end
+                end
+            end
+        end
+        for _, p in ipairs(Players:GetPlayers()) do
+            if p ~= player and p.Character and p.Character:FindFirstChild("HumanoidRootPart") then
+                local hrp = p.Character.HumanoidRootPart
+                hrp.Size = Vector3.new(2, 2, 1)
+                hrp.Transparency = 1
+                local sb = hrp:FindFirstChild("GZHitboxVisual")
+                if sb then sb:Destroy() end
+            end
+        end
+    end)
+end)
+
+createToggleFeature("Player ESP", function(active)
+    task.spawn(function()
+        while active and task.wait(1) do
+            for _, p in ipairs(Players:GetPlayers()) do
+                if p ~= player and p.Character and p.Character:FindFirstChild("Head") then
+                    if not p.Character.Head:FindFirstChild("GZ_ESP") then
+                        local bg = Instance.new("BillboardGui")
+                        bg.Name = "GZ_ESP"
+                        bg.Size = UDim2.new(0, 100, 0, 40)
+                        bg.StudsOffset = Vector3.new(0, 2.5, 0)
+                        bg.AlwaysOnTop = true
+                        bg.Parent = p.Character.Head
+
+                        local txt = Instance.new("TextLabel")
+                        txt.Size = UDim2.new(1, 0, 1, 0)
+                        txt.BackgroundTransparency = 1
+                        txt.TextColor3 = Color3.fromRGB(255, 150, 200)
+                        txt.TextStrokeTransparency = 0
+                        txt.TextSize = 12
+                        txt.Font = Enum.Font.SourceSansBold
+                        txt.Text = p.Name
+                        txt.Parent = bg
+                    end
+                end
+            end
+        end
+        if not active then
+            for _, p in ipairs(Players:GetPlayers()) do
+                if p.Character and p.Character:FindFirstChild("Head") then
+                    local esp = p.Character.Head:FindFirstChild("GZ_ESP")
+                    if esp then esp:Destroy() end
+                end
+            end
+        end
+    end)
+end)
+
+local function teleportWeapon(keyword)
+    local char = player.Character
+    if not char or not char:FindFirstChild("HumanoidRootPart") then return end
+    local hrp = char.HumanoidRootPart
+    local found = false
+
+    for _, obj in ipairs(workspace:GetDescendants()) do
+        if string.find(string.lower(obj.Name), string.lower(keyword)) then
+            if obj:IsA("Tool") then
+                obj.Parent = player.Backpack
+                found = true
+            elseif obj:IsA("Model") or obj:IsA("Part") then
+                local targetPart = obj:IsA("Model") and (obj.PrimaryPart or obj:FindFirstChild("Handle") or obj:FindFirstChildWhichIsA("BasePart")) or obj
+                if targetPart then
+                    targetPart.CFrame = hrp.CFrame + Vector3.new(0, 2, 0)
+                    found = true
+                end
+            end
+        end
+    end
+
+    if not found then
+        local rs = game:GetService("ReplicatedStorage")
+        for _, obj in ipairs(rs:GetDescendants()) do
+            if obj:IsA("Tool") and string.find(string.lower(obj.Name), string.lower(keyword)) then
+                local clone = obj:Clone()
+                clone.Parent = player.Backpack
+                found = true
+                break
+            end
+        end
+    end
+end
+
+createButtonFeature("Get AK-47", function() teleportWeapon("AK-47") end)
+createButtonFeature("Get M4A1", function() teleportWeapon("M4A1") end)
+createButtonFeature("Get MP5", function() teleportWeapon("MP5") end)
+createButtonFeature("Get Remington 870", function() teleportWeapon("Remington 870") end)
+createButtonFeature("Get M700", function() teleportWeapon("M700") end)
+createButtonFeature("Get FAL", function() teleportWeapon("FAL") end)
+createButtonFeature("Get Revolver", function() teleportWeapon("Revolver") end)
+createButtonFeature("Get M9", function() teleportWeapon("M9") end)
+createButtonFeature("Get Taser", function() teleportWeapon("Taser") end)
+
+local function tpToPosition(pos)
+    local char = player.Character
+    if char and char:FindFirstChild("HumanoidRootPart") then
+        char.HumanoidRootPart.CFrame = CFrame.new(pos)
+    end
+end
+
+createButtonFeature("TP Guard Spawn", function() tpToPosition(Vector3.new(799.1, 105.3, 2299.0)) end)
+createButtonFeature("TP Administration", function() tpToPosition(Vector3.new(748.9, 103.8, 2340.6)) end)
+createButtonFeature("TP Armory", function() tpToPosition(Vector3.new(830.3, 105.5, 2242.5)) end)
+createButtonFeature("TP Nexus", function() tpToPosition(Vector3.new(917.3, 104.7, 2392.6)) end)
+createButtonFeature("TP Courtyard", function() tpToPosition(Vector3.new(752.7, 101.9, 2571.8)) end)
+createButtonFeature("TP Kitchen", function() tpToPosition(Vector3.new(916.5, 112.3, 2225.4)) end)
+createButtonFeature("TP Cells", function() tpToPosition(Vector3.new(915.8, 112.0, 2456.6)) end)
+createButtonFeature("TP Prison Main", function() tpToPosition(Vector3.new(773.6, 88.5, 2327.4)) end)
