@@ -1,0 +1,848 @@
+--[[
+    ================================================================================
+    🌈 [GZHUB] BLOX FRUITS SCRIPT (THAI TRANSLATED + BUG FIXED) | BY GC
+    📌 พัฒนาจากสคริปต์ดิบ แปลภาษาไทยเต็มระบบ + แก้ไขบัค + อัปเกรด UI ใหม่
+    ✨ UI GZHUB ขอบสายรุ้งหมุนวนรอบหน้าจอ (Rainbow Running Border)
+    ✨ ปุ่มเปิด-ปิดสายรุ้งเคลื่อนไหว "GZ byGC"
+    ================================================================================
+--]]
+
+-- 1. Load Services & Anti-AFK
+local Players = game:GetService("Players")
+local RunService = game:GetService("RunService")
+local UserInputService = game:GetService("UserInputService")
+local TweenService = game:GetService("TweenService")
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local Workspace = game:GetService("Workspace")
+local VirtualUser = game:GetService("VirtualUser")
+local TeleportService = game:GetService("TeleportService")
+local CoreGui = game:GetService("CoreGui")
+
+local LocalPlayer = Players.LocalPlayer
+local Camera = Workspace.CurrentCamera
+
+-- Anti AFK
+LocalPlayer.Idled:Connect(function()
+    VirtualUser:CaptureController()
+    VirtualUser:ClickButton2(Vector2.new(0, 0))
+end)
+
+-- 2. Data & Tables (Places & Fighting Styles)
+local PlaceId = game.PlaceId
+local placesTable = {}
+
+if PlaceId == 2753915549 then
+    placesTable = {
+        Pirate_Start        = CFrame.new(1139.27991, 16.2994118, 1489.9082),
+        Marine_Start        = CFrame.new(-2549.59277, 6.88147211, 2041.77759),
+        Middle_Town         = CFrame.new(-689.600891, 15.2520638, 1583.40015),
+        Jungle              = CFrame.new(-1107.67139, 52.8026962, -509.441742),
+        Pirate_Village      = CFrame.new(-1149.46179, 14.597538, 4153.77197),
+        Desert              = CFrame.new(1330.46289, 101.895401, 4489.4126),
+        Frozen_Village      = CFrame.new(1462.11536, 97.277977, -1394.49268),
+        Marine_Fortress     = CFrame.new(-5150.52393, 375.275574, 4443.8418),
+        Lower_Skylands      = CFrame.new(-4824.10205, 789.458374, -2594.35742),
+        Prison              = CFrame.new(5443.79004, 161.839478, 787.355042),
+        Colosseum           = CFrame.new(-1674.77466, 39.3856201, -3138.40527),
+        Magma_Village       = CFrame.new(-5512.20947, 62.8255005, 8574.79688),
+        Underwater_City     = CFrame.new(4079.72363, 2.01439214, -1785.08655),
+        Upper_Skylands      = CFrame.new(-8037.54736, 5756.05762, -1961.71436),
+        Fountain_City       = CFrame.new(5641.07227, 579.584473, 4439)
+    }
+elseif PlaceId == 4442272183 then
+    placesTable = {
+        Kingdom_of_Rose      = CFrame.new(-388.854065, 73.0457153, 1931.16455),
+        Cafe                 = CFrame.new(-439.637817, 16.1458321, 251.941086),
+        Green_Zone           = CFrame.new(-2273.16821, 72.9919205, -2722.45361),
+        Graveyard_Island     = CFrame.new(-5616.36816, 492.221741, -778.398376),
+        Snow_Mountain        = CFrame.new(738.229919, 411.102783, -5268.01611),
+        Hot_and_Cold         = CFrame.new(-5835.10498, 2.34777641, -5105.32617),
+        Cursed_Ship          = CFrame.new(-6530.77686, 83.212822, -163.563599),
+        Ice_Castle           = CFrame.new(6443.00488, 1349.70215, -6920.96973),
+        Forgotten_Island     = CFrame.new(-3029.80396, 319.791412, -10085.3828),
+        Colosseum            = CFrame.new(-1834.12988, 45.8205032, 1361.48169),
+        Dark_Arena           = CFrame.new(3780.47168, 22.6779613, -3499.69604)
+    }
+elseif PlaceId == 7449423635 then
+    placesTable = {
+        Port_Town           = CFrame.new(-300.577484, 43.7557373, 5442.08301),
+        Castle_on_the_Sea   = CFrame.new(-5059.08252, 314.54129, -2987.17603),
+        Hydra_Island        = CFrame.new(4169.14941, 51.5076714, -946.417419),
+        Great_Tree          = CFrame.new(1658.81677, 229.664246, -7081.79102),
+        Floating_Turtle     = CFrame.new(-10779.4365, 564.60791, -8916.33105),
+        Beautiful_Pirate    = CFrame.new(-11994.1064, 331.833496, -8840.43262),
+        Haunted_Castle      = CFrame.new(-9514.76367, 164.00621, 5786.98096),
+        Sea_of_Treats       = CFrame.new(-2044.03003, 4.70108652, -9863.58008),
+        Candy_Island_Mirror = CFrame.new(-2140.68823, 70.0088425, -12275.4658),
+        Mansion             = CFrame.new(-12550.7207, 337.194061, -7526.95508),
+        Friendly_Arena      = CFrame.new(5228.08154, 68.1503601, -1447.43665),
+        Yama_Temple         = CFrame.new(5227.45508, 6.56511021, 1171.44922),
+        Tushita_Temple      = CFrame.new(5237.53711, 138.897995, 912.049561)
+    }
+end
+
+local fightingStylesTable = {
+    Dark_Step = function()
+        ReplicatedStorage.Remotes.CommF_:InvokeServer("BuyBlackLeg")
+    end,
+    Electric = function()
+        ReplicatedStorage.Remotes.CommF_:InvokeServer("BuyElectro")
+    end,
+    Water_Kungfu = function()
+        ReplicatedStorage.Remotes.CommF_:InvokeServer("BuyFishmanKarate")
+    end,
+    Dragon_Breath = function()
+        ReplicatedStorage.Remotes.CommF_:InvokeServer("BlackbeardReward", "DragonClaw", "1")
+        ReplicatedStorage.Remotes.CommF_:InvokeServer("BlackbeardReward", "DragonClaw", "2")
+    end,
+    Superhuman = function()
+        ReplicatedStorage.Remotes.CommF_:InvokeServer("BuySuperhuman")
+    end,
+    Death_Step = function()
+        ReplicatedStorage.Remotes.CommF_:InvokeServer("BuyDeathStep")
+    end,
+    Sharkman_Karate = function()
+        ReplicatedStorage.Remotes.CommF_:InvokeServer("BuySharkmanKarate", true)
+        ReplicatedStorage.Remotes.CommF_:InvokeServer("BuySharkmanKarate")
+    end,
+    Electric_Claw = function()
+        ReplicatedStorage.Remotes.CommF_:InvokeServer("BuyElectricClaw", true)
+        ReplicatedStorage.Remotes.CommF_:InvokeServer("BuyElectricClaw")
+    end,
+    Dragon_Talon = function()
+        ReplicatedStorage.Remotes.CommF_:InvokeServer("BuyDragonTalon", true)
+        ReplicatedStorage.Remotes.CommF_:InvokeServer("BuyDragonTalon")
+    end
+}
+
+-- 3. Global Script Settings (ค่าตั้งต้น)
+getgenv().GZHUB = {
+    CurrentSelectedPlayer = "",
+    FollowingPlayer = false,
+    SpectatingPlayer = false,
+    SelectedPlace = "",
+    SelectedItemToPurchase = "",
+    SelectedChip = "Flame",
+    KillAura = false,
+    AutoAwaken = false,
+    AutoBuso = false,
+    Noclip = false,
+    WalkSpeedEnabled = false,
+    WalkSpeed = 50,
+    JumpPowerEnabled = false,
+    JumpPower = 100,
+    InfiniteJump = false
+}
+
+-- 4. Helper Functions (แก้บัคระบบวาป และระบบตรวจตัวละคร)
+local currentTween = nil
+local function teleportTo(CFrameValue)
+    if not CFrameValue then return end
+    pcall(function()
+        local Character = LocalPlayer.Character
+        if Character and Character:FindFirstChild("HumanoidRootPart") then
+            local RootPart = Character.HumanoidRootPart
+            local distance = (RootPart.Position - CFrameValue.Position).Magnitude
+            local timeToTween = math.max(0.1, distance / 300)
+            
+            if currentTween then currentTween:Cancel() end
+            currentTween = TweenService:Create(RootPart, TweenInfo.new(timeToTween, Enum.EasingStyle.Linear), { CFrame = CFrameValue })
+            currentTween:Play()
+        end
+    end)
+end
+
+local function GetPlayerCharacter(playerName)
+    local targetPlayer = Players:FindFirstChild(playerName)
+    if targetPlayer and targetPlayer.Character then
+        return targetPlayer.Character
+    end
+    -- Fallback search in workspace
+    return Workspace:FindFirstChild("Characters") and Workspace.Characters:FindFirstChild(playerName)
+        or Workspace:FindFirstChild(playerName)
+end
+
+-- 5. Background Loops (Kill Aura, Follow Player, Auto Buso, Auto Awaken)
+
+-- Kill Aura Engine (แก้ไขบัคการลูปและปรับ SimulationRadius ปลอดภัย)
+task.spawn(function()
+    while task.wait(0.1) do
+        if getgenv().GZHUB.KillAura then
+            pcall(function()
+                local Enemies = Workspace:FindFirstChild("Enemies") or Workspace
+                for _, enemy in ipairs(Enemies:GetChildren()) do
+                    if enemy:IsA("Model") and enemy:FindFirstChild("Humanoid") and enemy:FindFirstChild("HumanoidRootPart") then
+                        if enemy.Humanoid.Health > 0 then
+                            local char = LocalPlayer.Character
+                            if char and char:FindFirstChild("HumanoidRootPart") then
+                                local dist = (enemy.HumanoidRootPart.Position - char.HumanoidRootPart.Position).Magnitude
+                                if dist <= 350 then
+                                    if sethiddenproperty then
+                                        sethiddenproperty(LocalPlayer, "SimulationRadius", math.huge)
+                                    end
+                                    enemy.Humanoid.Health = 0
+                                    enemy.HumanoidRootPart.CanCollide = false
+                                end
+                            end
+                        end
+                    end
+                end
+            end)
+        end
+    end
+end)
+
+-- Follow Player Loop
+task.spawn(function()
+    while task.wait(0.2) do
+        if getgenv().GZHUB.FollowingPlayer and getgenv().GZHUB.CurrentSelectedPlayer ~= "" then
+            local targetChar = GetPlayerCharacter(getgenv().GZHUB.CurrentSelectedPlayer)
+            if targetChar and targetChar:FindFirstChild("HumanoidRootPart") then
+                teleportTo(targetChar.HumanoidRootPart.CFrame)
+            end
+        end
+    end
+end)
+
+-- Spectate Player Loop
+RunService.RenderStepped:Connect(function()
+    pcall(function()
+        if getgenv().GZHUB.SpectatingPlayer and getgenv().GZHUB.CurrentSelectedPlayer ~= "" then
+            local targetChar = GetPlayerCharacter(getgenv().GZHUB.CurrentSelectedPlayer)
+            if targetChar and targetChar:FindFirstChild("Humanoid") then
+                Camera.CameraSubject = targetChar.Humanoid
+            end
+        else
+            if LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("Humanoid") then
+                Camera.CameraSubject = LocalPlayer.Character.Humanoid
+            end
+        end
+    end)
+end)
+
+-- Auto Buso Haki Loop
+task.spawn(function()
+    while task.wait(1) do
+        if getgenv().GZHUB.AutoBuso then
+            pcall(function()
+                local char = LocalPlayer.Character
+                if char and not char:FindFirstChild("HasBuso") then
+                    ReplicatedStorage.Remotes.CommF_:InvokeServer("Buso")
+                end
+            end)
+        end
+    end
+end)
+
+-- Auto Awaken Loop
+task.spawn(function()
+    while task.wait(1) do
+        if getgenv().GZHUB.AutoAwaken then
+            pcall(function()
+                ReplicatedStorage.Remotes.CommF_:InvokeServer("Awakener", "Check")
+                ReplicatedStorage.Remotes.CommF_:InvokeServer("Awakener", "Awaken")
+            end)
+        end
+    end
+end)
+
+-- Noclip & Speed Engine
+RunService.Stepped:Connect(function()
+    if getgenv().GZHUB.Noclip then
+        local Character = LocalPlayer.Character
+        if Character then
+            for _, part in ipairs(Character:GetDescendants()) do
+                if part:IsA("BasePart") and part.CanCollide then
+                    part.CanCollide = false
+                end
+            end
+        end
+    end
+end)
+
+RunService.RenderStepped:Connect(function()
+    local char = LocalPlayer.Character
+    if char and char:FindFirstChild("Humanoid") then
+        if getgenv().GZHUB.WalkSpeedEnabled then
+            char.Humanoid.WalkSpeed = getgenv().GZHUB.WalkSpeed
+        end
+        if getgenv().GZHUB.JumpPowerEnabled then
+            char.Humanoid.UseJumpPower = true
+            char.Humanoid.JumpPower = getgenv().GZHUB.JumpPower
+        end
+    end
+end)
+
+UserInputService.JumpRequest:Connect(function()
+    if getgenv().GZHUB.InfiniteJump then
+        local char = LocalPlayer.Character
+        if char and char:FindFirstChild("Humanoid") then
+            char.Humanoid:ChangeState(Enum.HumanoidStateType.Jumping)
+        end
+    end
+end)
+
+-- 6. CUSTOM GZHUB GUI SETUP (ขอบรุ้งวิ่งอ้อม + ปุ่มเปิด/ปิด GZ byGC สายรุ้ง)
+
+if CoreGui:FindFirstChild("GZHUB_GUI") then CoreGui.GZHUB_GUI:Destroy() end
+if LocalPlayer.PlayerGui:FindFirstChild("GZHUB_GUI") then LocalPlayer.PlayerGui.GZHUB_GUI:Destroy() end
+
+local ScreenGui = Instance.new("ScreenGui")
+ScreenGui.Name = "GZHUB_GUI"
+ScreenGui.ResetOnSpawn = false
+ScreenGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
+
+local ParentTarget = (gethui and gethui()) or CoreGui or LocalPlayer:WaitForChild("PlayerGui")
+ScreenGui.Parent = ParentTarget
+
+-- Rainbow Helper Sequence
+local ColorSequencePoints = {
+    ColorSequenceKeypoint.new(0, Color3.fromRGB(255, 0, 0)),
+    ColorSequenceKeypoint.new(0.16, Color3.fromRGB(255, 150, 0)),
+    ColorSequenceKeypoint.new(0.33, Color3.fromRGB(255, 255, 0)),
+    ColorSequenceKeypoint.new(0.5, Color3.fromRGB(0, 255, 100)),
+    ColorSequenceKeypoint.new(0.66, Color3.fromRGB(0, 180, 255)),
+    ColorSequenceKeypoint.new(0.83, Color3.fromRGB(150, 0, 255)),
+    ColorSequenceKeypoint.new(1, Color3.fromRGB(255, 0, 0))
+}
+
+-- OPEN/CLOSE TOGGLE BUTTON ("GZ byGC" Rainbow Text)
+local ToggleButton = Instance.new("TextButton")
+ToggleButton.Name = "GZ_ToggleButton"
+ToggleButton.Size = UDim2.new(0, 135, 0, 42)
+ToggleButton.Position = UDim2.new(0, 15, 0.3, 0)
+ToggleButton.BackgroundColor3 = Color3.fromRGB(18, 20, 28)
+ToggleButton.BorderSizePixel = 0
+ToggleButton.Active = true
+ToggleButton.Draggable = true
+ToggleButton.AutoButtonColor = false
+ToggleButton.Text = "GZ byGC"
+ToggleButton.Font = Enum.Font.FredokaOne
+ToggleButton.TextSize = 20
+ToggleButton.Parent = ScreenGui
+
+local ToggleCorner = Instance.new("UICorner")
+ToggleCorner.CornerRadius = UDim.new(0, 10)
+ToggleCorner.Parent = ToggleButton
+
+local ToggleStroke = Instance.new("UIStroke")
+ToggleStroke.Thickness = 2.5
+ToggleStroke.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
+ToggleStroke.Parent = ToggleButton
+
+local ToggleStrokeGradient = Instance.new("UIGradient")
+ToggleStrokeGradient.Color = ColorSequence.new(ColorSequencePoints)
+ToggleStrokeGradient.Parent = ToggleStroke
+
+-- MAIN UI WINDOW (GZHUB)
+local MainFrame = Instance.new("Frame")
+MainFrame.Name = "MainFrame"
+MainFrame.Size = UDim2.new(0, 640, 0, 430)
+MainFrame.Position = UDim2.new(0.5, -320, 0.5, -215)
+MainFrame.BackgroundColor3 = Color3.fromRGB(15, 17, 24)
+MainFrame.BorderSizePixel = 0
+MainFrame.Active = true
+MainFrame.Draggable = true
+MainFrame.Parent = ScreenGui
+
+local MainCorner = Instance.new("UICorner")
+MainCorner.CornerRadius = UDim.new(0, 14)
+MainCorner.Parent = MainFrame
+
+-- RAINBOW RUNNING BORDER (ขอบรุ้งวิ่งอ้อม)
+local RainbowStroke = Instance.new("UIStroke")
+RainbowStroke.Name = "RainbowRunningBorder"
+RainbowStroke.Thickness = 3.5
+RainbowStroke.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
+RainbowStroke.Parent = MainFrame
+
+local RainbowGradient = Instance.new("UIGradient")
+RainbowGradient.Name = "BorderGradient"
+RainbowGradient.Color = ColorSequence.new(ColorSequencePoints)
+RainbowGradient.Parent = RainbowStroke
+
+-- ROTATING RAINBOW BORDER ANIMATION LOOP
+RunService.RenderStepped:Connect(function()
+    local rainbowColor = Color3.fromHSV((tick() * 0.6) % 1, 0.9, 1)
+    ToggleButton.TextColor3 = rainbowColor
+    
+    -- Rotate Rainbow Border around UI
+    RainbowGradient.Rotation = (RainbowGradient.Rotation + 2.5) % 360
+    ToggleStrokeGradient.Rotation = (ToggleStrokeGradient.Rotation + 3) % 360
+end)
+
+-- HEADER BAR
+local Header = Instance.new("Frame")
+Header.Name = "Header"
+Header.Size = UDim2.new(1, 0, 0, 45)
+Header.BackgroundColor3 = Color3.fromRGB(22, 25, 36)
+Header.BorderSizePixel = 0
+Header.Parent = MainFrame
+
+local HeaderCorner = Instance.new("UICorner")
+HeaderCorner.CornerRadius = UDim.new(0, 14)
+HeaderCorner.Parent = Header
+
+local Title = Instance.new("TextLabel")
+Title.Size = UDim2.new(0, 300, 1, 0)
+Title.Position = UDim2.new(0, 18, 0, 0)
+Title.BackgroundTransparency = 1
+Title.Text = "GZHUB | Blox Fruits"
+Title.Font = Enum.Font.FredokaOne
+Title.TextSize = 20
+Title.TextColor3 = Color3.fromRGB(255, 255, 255)
+Title.TextXAlignment = Enum.TextXAlignment.Left
+Title.Parent = Header
+
+local Subtitle = Instance.new("TextLabel")
+Subtitle.Size = UDim2.new(0, 150, 1, 0)
+Subtitle.Position = UDim2.new(0, 230, 0, 0)
+Subtitle.BackgroundTransparency = 1
+Subtitle.Text = "by GC"
+Subtitle.Font = Enum.Font.GothamBold
+Subtitle.TextSize = 13
+Subtitle.TextColor3 = Color3.fromRGB(0, 230, 255)
+Subtitle.TextXAlignment = Enum.TextXAlignment.Left
+Subtitle.Parent = Header
+
+-- Close Button
+local CloseBtn = Instance.new("TextButton")
+CloseBtn.Size = UDim2.new(0, 30, 0, 30)
+CloseBtn.Position = UDim2.new(1, -38, 0.5, -15)
+CloseBtn.BackgroundColor3 = Color3.fromRGB(255, 55, 80)
+CloseBtn.Text = "X"
+CloseBtn.Font = Enum.Font.GothamBold
+CloseBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+CloseBtn.TextSize = 14
+CloseBtn.Parent = Header
+
+local CloseCorner = Instance.new("UICorner")
+CloseCorner.CornerRadius = UDim.new(0, 8)
+CloseCorner.Parent = CloseBtn
+
+CloseBtn.MouseButton1Click:Connect(function()
+    MainFrame.Visible = false
+end)
+
+-- Toggle UI Function
+ToggleButton.MouseButton1Click:Connect(function()
+    MainFrame.Visible = not MainFrame.Visible
+end)
+
+-- Keybind Toggle UI (RightControl / Noclip)
+UserInputService.InputBegan:Connect(function(input, gpe)
+    if not gpe then
+        if input.KeyCode == Enum.KeyCode.RightControl then
+            MainFrame.Visible = not MainFrame.Visible
+        elseif input.KeyCode == Enum.KeyCode.N then
+            getgenv().GZHUB.Noclip = not getgenv().GZHUB.Noclip
+        end
+    end
+end)
+
+-- SIDEBAR TABS SYSTEM
+local Sidebar = Instance.new("Frame")
+Sidebar.Size = UDim2.new(0, 155, 1, -55)
+Sidebar.Position = UDim2.new(0, 8, 0, 50)
+Sidebar.BackgroundColor3 = Color3.fromRGB(20, 22, 32)
+Sidebar.BorderSizePixel = 0
+Sidebar.Parent = MainFrame
+
+local SidebarCorner = Instance.new("UICorner")
+SidebarCorner.CornerRadius = UDim.new(0, 10)
+SidebarCorner.Parent = Sidebar
+
+local TabContainer = Instance.new("Frame")
+TabContainer.Size = UDim2.new(1, -175, 1, -55)
+TabContainer.Position = UDim2.new(0, 168, 0, 50)
+TabContainer.BackgroundColor3 = Color3.fromRGB(20, 22, 32)
+TabContainer.BorderSizePixel = 0
+TabContainer.Parent = MainFrame
+
+local ContainerCorner = Instance.new("UICorner")
+ContainerCorner.CornerRadius = UDim.new(0, 10)
+ContainerCorner.Parent = TabContainer
+
+-- Tab list & page instances
+local Tabs = {"ผู้เล่น (Players)", "ย้ายเกาะ (Teleport)", "ซื้อหมัด (Styles)", "ดันเจี้ยน (Raid)", "อื่นๆ (Misc)"}
+local TabPages = {}
+local TabButtons = {}
+
+local TabListLayout = Instance.new("UIListLayout")
+TabListLayout.SortOrder = Enum.SortOrder.LayoutOrder
+TabListLayout.Padding = UDim.new(0, 5)
+TabListLayout.Parent = Sidebar
+
+local TabPadding = Instance.new("UIPadding")
+TabPadding.PaddingTop = UDim.new(0, 8)
+TabPadding.PaddingLeft = UDim.new(0, 6)
+TabPadding.PaddingRight = UDim.new(0, 6)
+TabPadding.Parent = Sidebar
+
+for i, tabName in ipairs(Tabs) do
+    local btn = Instance.new("TextButton")
+    btn.Size = UDim2.new(1, 0, 0, 36)
+    btn.BackgroundColor3 = i == 1 and Color3.fromRGB(40, 45, 65) or Color3.fromRGB(26, 28, 40)
+    btn.Text = tabName
+    btn.Font = Enum.Font.GothamMedium
+    btn.TextColor3 = Color3.fromRGB(240, 240, 240)
+    btn.TextSize = 12
+    btn.Parent = Sidebar
+
+    local btnCorner = Instance.new("UICorner")
+    btnCorner.CornerRadius = UDim.new(0, 8)
+    btnCorner.Parent = btn
+
+    -- Create Page
+    local page = Instance.new("ScrollingFrame")
+    page.Size = UDim2.new(1, -16, 1, -16)
+    page.Position = UDim2.new(0, 8, 0, 8)
+    page.BackgroundTransparency = 1
+    page.ScrollBarThickness = 4
+    page.Visible = (i == 1)
+    page.Parent = TabContainer
+
+    local pageLayout = Instance.new("UIListLayout")
+    pageLayout.SortOrder = Enum.SortOrder.LayoutOrder
+    pageLayout.Padding = UDim.new(0, 8)
+    pageLayout.Parent = page
+
+    TabPages[i] = page
+    TabButtons[i] = btn
+
+    btn.MouseButton1Click:Connect(function()
+        for j, p in ipairs(TabPages) do
+            p.Visible = (j == i)
+            TabButtons[j].BackgroundColor3 = (j == i) and Color3.fromRGB(40, 45, 65) or Color3.fromRGB(26, 28, 40)
+        end
+    end)
+end
+
+-- UI HELPER CREATORS (Toggle, Slider, Button, Dropdown)
+local function CreateToggle(parent, text, defaultState, callback)
+    local frame = Instance.new("Frame")
+    frame.Size = UDim2.new(1, 0, 0, 42)
+    frame.BackgroundColor3 = Color3.fromRGB(28, 32, 46)
+    frame.Parent = parent
+
+    local corner = Instance.new("UICorner")
+    corner.CornerRadius = UDim.new(0, 8)
+    corner.Parent = frame
+
+    local label = Instance.new("TextLabel")
+    label.Size = UDim2.new(0.7, 0, 1, 0)
+    label.Position = UDim2.new(0, 12, 0, 0)
+    label.BackgroundTransparency = 1
+    label.Text = text
+    label.Font = Enum.Font.GothamMedium
+    label.TextColor3 = Color3.fromRGB(240, 240, 240)
+    label.TextSize = 12
+    label.TextXAlignment = Enum.TextXAlignment.Left
+    label.Parent = frame
+
+    local switch = Instance.new("TextButton")
+    switch.Size = UDim2.new(0, 50, 0, 24)
+    switch.Position = UDim2.new(1, -60, 0.5, -12)
+    switch.BackgroundColor3 = defaultState and Color3.fromRGB(0, 200, 120) or Color3.fromRGB(60, 65, 80)
+    switch.Text = defaultState and "ON" or "OFF"
+    switch.Font = Enum.Font.GothamBold
+    switch.TextColor3 = Color3.fromRGB(255, 255, 255)
+    switch.TextSize = 11
+    switch.Parent = frame
+
+    local switchCorner = Instance.new("UICorner")
+    switchCorner.CornerRadius = UDim.new(0, 12)
+    switchCorner.Parent = switch
+
+    local state = defaultState
+    switch.MouseButton1Click:Connect(function()
+        state = not state
+        switch.BackgroundColor3 = state and Color3.fromRGB(0, 200, 120) or Color3.fromRGB(60, 65, 80)
+        switch.Text = state and "ON" or "OFF"
+        callback(state)
+    end)
+    return frame
+end
+
+local function CreateButton(parent, text, callback)
+    local btn = Instance.new("TextButton")
+    btn.Size = UDim2.new(1, 0, 0, 38)
+    btn.BackgroundColor3 = Color3.fromRGB(0, 140, 240)
+    btn.Text = text
+    btn.Font = Enum.Font.GothamBold
+    btn.TextColor3 = Color3.fromRGB(255, 255, 255)
+    btn.TextSize = 12
+    btn.Parent = parent
+
+    local corner = Instance.new("UICorner")
+    corner.CornerRadius = UDim.new(0, 8)
+    corner.Parent = btn
+
+    btn.MouseButton1Click:Connect(callback)
+end
+
+local function CreateDropdown(parent, title, options, callback)
+    local frame = Instance.new("Frame")
+    frame.Size = UDim2.new(1, 0, 0, 42)
+    frame.BackgroundColor3 = Color3.fromRGB(28, 32, 46)
+    frame.ClipsDescendants = true
+    frame.Parent = parent
+
+    local corner = Instance.new("UICorner")
+    corner.CornerRadius = UDim.new(0, 8)
+    corner.Parent = frame
+
+    local label = Instance.new("TextLabel")
+    label.Size = UDim2.new(0.5, 0, 0, 42)
+    label.Position = UDim2.new(0, 12, 0, 0)
+    label.BackgroundTransparency = 1
+    label.Text = title
+    label.Font = Enum.Font.GothamMedium
+    label.TextColor3 = Color3.fromRGB(240, 240, 240)
+    label.TextSize = 12
+    label.TextXAlignment = Enum.TextXAlignment.Left
+    label.Parent = frame
+
+    local selectBtn = Instance.new("TextButton")
+    selectBtn.Size = UDim2.new(0.45, 0, 0, 28)
+    selectBtn.Position = UDim2.new(0.52, 0, 0, 7)
+    selectBtn.BackgroundColor3 = Color3.fromRGB(45, 50, 68)
+    selectBtn.Text = options[1] or "เลือกรายการ..."
+    selectBtn.Font = Enum.Font.GothamMedium
+    selectBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+    selectBtn.TextSize = 11
+    selectBtn.Parent = frame
+
+    local btnCorner = Instance.new("UICorner")
+    btnCorner.CornerRadius = UDim.new(0, 6)
+    btnCorner.Parent = selectBtn
+
+    local isOpen = false
+    local optionContainer = Instance.new("Frame")
+    optionContainer.Size = UDim2.new(1, -24, 0, 0)
+    optionContainer.Position = UDim2.new(0, 12, 0, 45)
+    optionContainer.BackgroundTransparency = 1
+    optionContainer.Parent = frame
+
+    local optLayout = Instance.new("UIListLayout")
+    optLayout.Padding = UDim.new(0, 4)
+    optLayout.Parent = optionContainer
+
+    local function refreshOptions(newOptions)
+        for _, child in ipairs(optionContainer:GetChildren()) do
+            if child:IsA("TextButton") then child:Destroy() end
+        end
+
+        for _, opt in ipairs(newOptions) do
+            local optBtn = Instance.new("TextButton")
+            optBtn.Size = UDim2.new(1, 0, 0, 30)
+            optBtn.BackgroundColor3 = Color3.fromRGB(38, 42, 58)
+            optBtn.Text = tostring(opt):gsub('_', ' ')
+            optBtn.Font = Enum.Font.GothamMedium
+            optBtn.TextColor3 = Color3.fromRGB(230, 230, 230)
+            optBtn.TextSize = 11
+            optBtn.Parent = optionContainer
+
+            local optCorner = Instance.new("UICorner")
+            optCorner.CornerRadius = UDim.new(0, 6)
+            optCorner.Parent = optBtn
+
+            optBtn.MouseButton1Click:Connect(function()
+                selectBtn.Text = optBtn.Text
+                isOpen = false
+                frame.Size = UDim2.new(1, 0, 0, 42)
+                callback(opt)
+            end)
+        end
+    end
+
+    refreshOptions(options)
+
+    selectBtn.MouseButton1Click:Connect(function()
+        isOpen = not isOpen
+        if isOpen then
+            local count = #optionContainer:GetChildren() - 1
+            frame.Size = UDim2.new(1, 0, 0, 48 + (count * 34))
+        else
+            frame.Size = UDim2.new(1, 0, 0, 42)
+        end
+    end)
+
+    return {
+        Refresh = function(self, newOpts)
+            refreshOptions(newOpts)
+            if newOpts[1] then selectBtn.Text = tostring(newOpts[1]):gsub('_', ' ') end
+        end
+    }
+end
+
+-- 7. POPULATE TABS WITH TRANSLATED & FIXED FEATURES
+
+-- TAB 1: 👥 PLAYERS (ผู้เล่น)
+local p1 = TabPages[1]
+
+local playerList = {}
+for _, p in ipairs(Players:GetPlayers()) do
+    if p ~= LocalPlayer then table.insert(playerList, p.Name) end
+end
+
+local playerDropdownRef = CreateDropdown(p1, "เลือกผู้เล่นเป้าหมาย", playerList, function(selected)
+    getgenv().GZHUB.CurrentSelectedPlayer = selected
+end)
+
+CreateButton(p1, "🔄 รีเฟรชรายชื่อผู้เล่นในเซิร์ฟเวอร์", function()
+    local newList = {}
+    for _, p in ipairs(Players:GetPlayers()) do
+        if p ~= LocalPlayer then table.insert(newList, p.Name) end
+    end
+    playerDropdownRef:Refresh(newList)
+end)
+
+CreateButton(p1, "🚀 วาปไปหาผู้เล่นที่เลือก", function()
+    if getgenv().GZHUB.CurrentSelectedPlayer ~= "" then
+        local targetChar = GetPlayerCharacter(getgenv().GZHUB.CurrentSelectedPlayer)
+        if targetChar and targetChar:FindFirstChild("HumanoidRootPart") then
+            teleportTo(targetChar.HumanoidRootPart.CFrame)
+        end
+    end
+end)
+
+CreateToggle(p1, "🏃 วาปตามผู้เล่นอัตโนมัติ (Follow Tween)", false, function(v)
+    getgenv().GZHUB.FollowingPlayer = v
+end)
+
+CreateToggle(p1, "👁️ ส่องมุมมองผู้เล่น (Spectate Camera)", false, function(v)
+    getgenv().GZHUB.SpectatingPlayer = v
+end)
+
+-- TAB 2: 📍 TELEPORT (ย้ายเกาะ & ทะเล)
+local p2 = TabPages[2]
+
+local placeList = {}
+for k, _ in pairs(placesTable) do
+    table.insert(placeList, k)
+end
+
+CreateDropdown(p2, "เลือกเกาะที่ต้องการไป", placeList, function(selectedPlace)
+    getgenv().GZHUB.SelectedPlace = selectedPlace
+end)
+
+CreateButton(p2, "🚀 วาปไปเกาะที่เลือก (Teleport to Place)", function()
+    if getgenv().GZHUB.SelectedPlace ~= "" and placesTable[getgenv().GZHUB.SelectedPlace] then
+        teleportTo(placesTable[getgenv().GZHUB.SelectedPlace])
+    end
+end)
+
+CreateButton(p2, "🌊 ย้ายไป Sea 1 (First Sea / Old World)", function()
+    ReplicatedStorage.Remotes.CommF_:InvokeServer("TravelMain")
+end)
+
+CreateButton(p2, "🌊 ย้ายไป Sea 2 (Second Sea / New World)", function()
+    ReplicatedStorage.Remotes.CommF_:InvokeServer("TravelDressrosa")
+end)
+
+CreateButton(p2, "🌊 ย้ายไป Sea 3 (Third Sea / Zou)", function()
+    ReplicatedStorage.Remotes.CommF_:InvokeServer("TravelZou")
+end)
+
+-- TAB 3: 🥊 PURCHASE STYLES (ซื้อสำนักหมัด)
+local p3 = TabPages[3]
+
+local styleList = {}
+for k, _ in pairs(fightingStylesTable) do
+    table.insert(styleList, k)
+end
+
+CreateDropdown(p3, "เลือกวิชาหมัดที่ต้องการซื้อ", styleList, function(selectedStyle)
+    getgenv().GZHUB.SelectedItemToPurchase = selectedStyle
+end)
+
+CreateButton(p3, "💰 ซื้อวิชาหมัดที่เลือก (Buy Style)", function()
+    local styleKey = getgenv().GZHUB.SelectedItemToPurchase
+    if styleKey ~= "" and fightingStylesTable[styleKey] then
+        pcall(fightingStylesTable[styleKey])
+    end
+end)
+
+-- TAB 4: ⚡ RAID & DUNGEON (ดันเจี้ยนและเรด)
+local p4 = TabPages[4]
+
+CreateButton(p4, "📍 วาปไปห้องซื้อชิปเรด (Raid Room)", function()
+    local raidCFrame = nil
+    if PlaceId == 4442272183 then
+        raidCFrame = CFrame.new(-6438.63623, 250.645309, -4499.74756)
+    elseif PlaceId == 7449423635 then
+        raidCFrame = CFrame.new(-5004.85547, 325.242981, -2896.60327)
+    end
+    if raidCFrame then teleportTo(raidCFrame) end
+end)
+
+CreateDropdown(p4, "เลือกประเภทชิปเรด", {"Flame", "Ice", "Quake", "Light", "Dark", "String", "Rumble", "Magma", "Human: Buddha", "Sand"}, function(selectedChip)
+    getgenv().GZHUB.SelectedChip = selectedChip
+end)
+
+CreateButton(p4, "🛒 ซื้อชิปเรดที่เลือก (Buy Chip)", function()
+    pcall(function()
+        ReplicatedStorage.Remotes.CommF_:InvokeServer("RaidsNpc", "Check")
+        ReplicatedStorage.Remotes.CommF_:InvokeServer("RaidsNpc", "Select", getgenv().GZHUB.SelectedChip)
+    end)
+end)
+
+CreateToggle(p4, "⚡ Kill Aura (ฆ่ามอนสเตอร์รอบตัวทันที)", false, function(v)
+    getgenv().GZHUB.KillAura = v
+end)
+
+CreateToggle(p4, "🔥 Auto Awaken (ปลุกผลปีศาจอัตโนมัติหลังลงเรด)", false, function(v)
+    getgenv().GZHUB.AutoAwaken = v
+end)
+
+-- TAB 5: ⚙️ MISC (ฟังก์ชั่นเพิ่มเติม)
+local p5 = TabPages[5]
+
+CreateToggle(p5, "🖤 Auto Buso Haki (เปิดฮาคิเกราะอัตโนมัติ)", false, function(v)
+    getgenv().GZHUB.AutoBuso = v
+end)
+
+CreateButton(p5, "👁️ เปิดระยะฮาคิสังเกตแบบไร้ขีดจำกัด (Inf Observation)", function()
+    pcall(function()
+        if LocalPlayer:FindFirstChild("VisionRadius") then
+            LocalPlayer.VisionRadius.Value = math.huge
+        end
+    end)
+end)
+
+CreateButton(p5, "🛡️ ป้องกันอาการชะงัก/สลบ (No Stun)", function()
+    pcall(function()
+        local char = LocalPlayer.Character
+        if char and char:FindFirstChild("Stun") then
+            char.Stun:Destroy()
+        end
+    end)
+end)
+
+CreateButton(p5, "🎒 เปิดหน้าต่างกระเป๋าเก็บของ (Open Inventory)", function()
+    pcall(function()
+        ReplicatedStorage.Remotes.CommF_:InvokeServer("getInventoryWeapons")
+    end)
+end)
+
+CreateButton(p5, "🔄 เชื่อมต่อเซิร์ฟเวอร์ใหม่ (Rejoin Server)", function()
+    TeleportService:Teleport(PlaceId, LocalPlayer)
+end)
+
+CreateToggle(p5, "👻 เดินทะลุกำแพง (Noclip - ปุ่ม N)", false, function(v)
+    getgenv().GZHUB.Noclip = v
+end)
+
+CreateToggle(p5, "🏃 เพิ่มความเร็วการวิ่ง (Speed)", false, function(v)
+    getgenv().GZHUB.WalkSpeedEnabled = v
+    if not v and LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("Humanoid") then
+        LocalPlayer.Character.Humanoid.WalkSpeed = 16
+    end
+end)
+
+CreateToggle(p5, "🦘 กระโดดกลางอากาศไม่จำกัด (Inf Jump)", false, function(v)
+    getgenv().GZHUB.InfiniteJump = v
+end)
+
+print("GZHUB Blox Fruits Loaded Successfully! Created by GC")
