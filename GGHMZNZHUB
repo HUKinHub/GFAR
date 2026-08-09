@@ -1,0 +1,447 @@
+-- [[ GZHUB | PVP - Complete Blox Fruits Hub ]] --
+local Players = game:GetService("Players")
+local RunService = game:GetService("RunService")
+local CoreGui = game:GetService("CoreGui")
+local UserInputService = game:GetService("UserInputService")
+local TeleportService = game:GetService("TeleportService")
+local player = Players.LocalPlayer or Players.PlayerAdded:Wait()
+
+if CoreGui:FindFirstChild("GZHUB_PVP_UI") then
+    CoreGui.GZHUB_PVP_UI:Destroy()
+end
+
+local ScreenGui = Instance.new("ScreenGui")
+ScreenGui.Name = "GZHUB_PVP_UI"
+ScreenGui.Parent = CoreGui
+ScreenGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
+
+-- Main Frame
+local MainFrame = Instance.new("Frame")
+MainFrame.Name = "MainFrame"
+MainFrame.Parent = ScreenGui
+MainFrame.BackgroundColor3 = Color3.fromRGB(24, 24, 28)
+MainFrame.BorderSizePixel = 0
+MainFrame.Position = UDim2.new(0.5, -310, 0.5, -210)
+MainFrame.Size = UDim2.new(0, 620, 0, 420)
+
+local UICorner = Instance.new("UICorner")
+UICorner.CornerRadius = UDim.new(0, 10)
+UICorner.Parent = MainFrame
+
+-- Top Bar
+local TopBar = Instance.new("Frame")
+TopBar.Name = "TopBar"
+TopBar.Parent = MainFrame
+TopBar.BackgroundColor3 = Color3.fromRGB(30, 30, 38)
+TopBar.BorderSizePixel = 0
+TopBar.Size = UDim2.new(1, 0, 0, 40)
+
+local TopBarCorner = Instance.new("UICorner")
+TopBarCorner.CornerRadius = UDim.new(0, 10)
+TopBarCorner.Parent = TopBar
+
+local FixCorner = Instance.new("Frame")
+FixCorner.Parent = TopBar
+FixCorner.BackgroundColor3 = Color3.fromRGB(30, 30, 38)
+FixCorner.BorderSizePixel = 0
+FixCorner.Position = UDim2.new(0, 0, 0.5, 0)
+FixCorner.Size = UDim2.new(1, 0, 0.5, 0)
+
+-- Title
+local TitleLabel = Instance.new("TextLabel")
+TitleLabel.Parent = TopBar
+TitleLabel.BackgroundTransparency = 1
+TitleLabel.Position = UDim2.new(0, 15, 0, 0)
+TitleLabel.Size = UDim2.new(0, 150, 1, 0)
+TitleLabel.Font = Enum.Font.GothamBold
+TitleLabel.Text = "GZHUB | PVP"
+TitleLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
+TitleLabel.TextSize = 16
+TitleLabel.TextXAlignment = Enum.TextXAlignment.Left
+
+-- Rainbow "by GC" Text
+local RainbowText = Instance.new("TextLabel")
+RainbowText.Parent = TopBar
+RainbowText.BackgroundTransparency = 1
+RainbowText.Position = UDim2.new(0, 140, 0, 0)
+RainbowText.Size = UDim2.new(0, 100, 1, 0)
+RainbowText.Font = Enum.Font.GothamSemibold
+RainbowText.Text = "by GC"
+RainbowText.TextSize = 13
+RainbowText.TextXAlignment = Enum.TextXAlignment.Left
+
+-- Sidebar Menu
+local Sidebar = Instance.new("ScrollingFrame")
+Sidebar.Name = "Sidebar"
+Sidebar.Parent = MainFrame
+Sidebar.Active = true
+Sidebar.BackgroundColor3 = Color3.fromRGB(18, 18, 22)
+Sidebar.BorderSizePixel = 0
+Sidebar.Position = UDim2.new(0, 0, 0, 40)
+Sidebar.Size = UDim2.new(0, 150, 1, -40)
+Sidebar.CanvasSize = UDim2.new(0, 0, 0, 300)
+Sidebar.ScrollBarThickness = 2
+
+local UIListLayout = Instance.new("UIListLayout")
+UIListLayout.Parent = Sidebar
+UIListLayout.HorizontalAlignment = Enum.HorizontalAlignment.Center
+UIListLayout.SortOrder = Enum.SortOrder.LayoutOrder
+UIListLayout.Padding = UDim.new(0, 6)
+
+-- Container for Pages
+local Container = Instance.new("Frame")
+Container.Name = "Container"
+Container.Parent = MainFrame
+Container.BackgroundTransparency = 1
+Container.Position = UDim2.new(0, 160, 0, 50)
+Container.Size = UDim2.new(1, -170, 1, -60)
+
+local pages = {}
+
+local function createPage(name)
+    local sf = Instance.new("ScrollingFrame")
+    sf.Name = name .. "Page"
+    sf.Parent = Container
+    sf.BackgroundTransparency = 1
+    sf.Size = UDim2.new(1, 0, 1, 0)
+    sf.CanvasSize = UDim2.new(0, 0, 0, 0)
+    sf.AutomaticCanvasSize = Enum.AutomaticSize.Y
+    sf.ScrollBarThickness = 3
+    sf.Visible = false
+
+    local layout = Instance.new("UIListLayout")
+    layout.Parent = sf
+    layout.SortOrder = Enum.SortOrder.LayoutOrder
+    layout.Padding = UDim.new(0, 6)
+
+    table.insert(pages, sf)
+    return sf
+end
+
+local function createTabButton(name, order, page)
+    local btn = Instance.new("TextButton")
+    btn.Name = name .. "Button"
+    btn.Parent = Sidebar
+    btn.BackgroundColor3 = Color3.fromRGB(30, 30, 38)
+    btn.BorderSizePixel = 0
+    btn.Size = UDim2.new(0, 135, 0, 36)
+    btn.AutoButtonColor = false
+    btn.Font = Enum.Font.GothamMedium
+    btn.Text = "  " .. name
+    btn.TextColor3 = Color3.fromRGB(180, 180, 190)
+    btn.TextSize = 13
+    btn.TextXAlignment = Enum.TextXAlignment.Left
+
+    local corner = Instance.new("UICorner")
+    corner.CornerRadius = UDim.new(0, 6)
+    corner.Parent = btn
+
+    btn.MouseButton1Click:Connect(function()
+        for _, p in ipairs(pages) do
+            p.Visible = false
+        end
+        page.Visible = true
+    end)
+end
+
+-- Create Pages matching the reference UI
+local pageGeneral = createPage("General")
+local pageCombat = createPage("Combat")
+local pageESP = createPage("ESP")
+local pageKeyBind = createPage("KeyBind")
+local pageServer = createPage("Server")
+local pageConfig = createPage("Config")
+
+createTabButton("General", 1, pageGeneral)
+createTabButton("Combat", 2, pageCombat)
+createTabButton("ESP", 3, pageESP)
+createTabButton("Key Bind", 4, pageKeyBind)
+createTabButton("Server", 5, pageServer)
+createTabButton("Config", 6, pageConfig)
+
+pageGeneral.Visible = true
+
+-- UI Elements Builder
+local function addToggle(page, title, desc, callback)
+    local f = Instance.new("Frame")
+    f.Parent = page
+    f.BackgroundColor3 = Color3.fromRGB(30, 30, 38)
+    f.BorderSizePixel = 0
+    f.Size = UDim2.new(1, -10, 0, 48)
+
+    local corner = Instance.new("UICorner")
+    corner.CornerRadius = UDim.new(0, 6)
+    corner.Parent = f
+
+    local lblTitle = Instance.new("TextLabel")
+    lblTitle.Parent = f
+    lblTitle.BackgroundTransparency = 1
+    lblTitle.Position = UDim2.new(0, 12, 0, 6)
+    lblTitle.Size = UDim2.new(0, 300, 0, 18)
+    lblTitle.Font = Enum.Font.GothamBold
+    lblTitle.Text = title
+    lblTitle.TextColor3 = Color3.fromRGB(230, 230, 235)
+    lblTitle.TextSize = 13
+    lblTitle.TextXAlignment = Enum.TextXAlignment.Left
+
+    local lblDesc = Instance.new("TextLabel")
+    lblDesc.Parent = f
+    lblDesc.BackgroundTransparency = 1
+    lblDesc.Position = UDim2.new(0, 12, 0, 24)
+    lblDesc.Size = UDim2.new(0, 350, 0, 16)
+    lblDesc.Font = Enum.Font.Gotham
+    lblDesc.Text = desc
+    lblDesc.TextColor3 = Color3.fromRGB(140, 140, 150)
+    lblDesc.TextSize = 11
+    lblDesc.TextXAlignment = Enum.TextXAlignment.Left
+
+    local toggleBtn = Instance.new("TextButton")
+    toggleBtn.Parent = f
+    toggleBtn.BackgroundColor3 = Color3.fromRGB(45, 45, 55)
+    toggleBtn.Position = UDim2.new(1, -55, 0.5, -12)
+    toggleBtn.Size = UDim2.new(0, 45, 0, 24)
+    toggleBtn.Text = ""
+    toggleBtn.AutoButtonColor = false
+
+    local tCorner = Instance.new("UICorner")
+    tCorner.CornerRadius = UDim.new(1, 0)
+    tCorner.Parent = toggleBtn
+
+    local circle = Instance.new("Frame")
+    circle.Parent = toggleBtn
+    circle.BackgroundColor3 = Color3.fromRGB(180, 180, 190)
+    circle.Position = UDim2.new(0, 2, 0.5, -10)
+    circle.Size = UDim2.new(0, 20, 0, 20)
+
+    local cCorner = Instance.new("UICorner")
+    cCorner.CornerRadius = UDim.new(1, 0)
+    cCorner.Parent = circle
+
+    local active = false
+    toggleBtn.MouseButton1Click:Connect(function()
+        active = not active
+        if active then
+            circle:TweenPosition(UDim2.new(1, -22, 0.5, -10), Enum.EasingDirection.Out, Enum.EasingStyle.Quad, 0.15, true)
+            toggleBtn.BackgroundColor3 = Color3.fromRGB(80, 140, 255)
+            circle.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+        else
+            circle:TweenPosition(UDim2.new(0, 2, 0.5, -10), Enum.EasingDirection.Out, Enum.EasingStyle.Quad, 0.15, true)
+            toggleBtn.BackgroundColor3 = Color3.fromRGB(45, 45, 55)
+            circle.BackgroundColor3 = Color3.fromRGB(180, 180, 190)
+        end
+        callback(active)
+    end)
+end
+
+local function addButton(page, title, desc, callback)
+    local f = Instance.new("Frame")
+    f.Parent = page
+    f.BackgroundColor3 = Color3.fromRGB(30, 30, 38)
+    f.BorderSizePixel = 0
+    f.Size = UDim2.new(1, -10, 0, 48)
+
+    local corner = Instance.new("UICorner")
+    corner.CornerRadius = UDim.new(0, 6)
+    corner.Parent = f
+
+    local lblTitle = Instance.new("TextLabel")
+    lblTitle.Parent = f
+    lblTitle.BackgroundTransparency = 1
+    lblTitle.Position = UDim2.new(0, 12, 0, 6)
+    lblTitle.Size = UDim2.new(0, 300, 0, 18)
+    lblTitle.Font = Enum.Font.GothamBold
+    lblTitle.Text = title
+    lblTitle.TextColor3 = Color3.fromRGB(230, 230, 235)
+    lblTitle.TextSize = 13
+    lblTitle.TextXAlignment = Enum.TextXAlignment.Left
+
+    local lblDesc = Instance.new("TextLabel")
+    lblDesc.Parent = f
+    lblDesc.BackgroundTransparency = 1
+    lblDesc.Position = UDim2.new(0, 12, 0, 24)
+    lblDesc.Size = UDim2.new(0, 350, 0, 16)
+    lblDesc.Font = Enum.Font.Gotham
+    lblDesc.Text = desc
+    lblDesc.TextColor3 = Color3.fromRGB(140, 140, 150)
+    lblDesc.TextSize = 11
+    lblDesc.TextXAlignment = Enum.TextXAlignment.Left
+
+    local btn = Instance.new("TextButton")
+    btn.Parent = f
+    btn.BackgroundColor3 = Color3.fromRGB(60, 60, 75)
+    btn.Position = UDim2.new(1, -85, 0.5, -12)
+    btn.Size = UDim2.new(0, 75, 0, 24)
+    btn.Font = Enum.Font.GothamBold
+    btn.Text = "Execute"
+    btn.TextColor3 = Color3.fromRGB(255, 255, 255)
+    btn.TextSize = 11
+
+    local bCorner = Instance.new("UICorner")
+    bCorner.CornerRadius = UDim.new(0, 4)
+    bCorner.Parent = btn
+
+    btn.MouseButton1Click:Connect(callback)
+end
+
+-- ==================== GENERAL TAB = ====================
+addToggle(pageGeneral, "Invisible", "Invisible from another player.", function(v) print("Invisible:", v) end)
+addToggle(pageGeneral, "Speed Boost", "Enable to activate Speed Boost", function(v)
+    task.spawn(function()
+        while v and task.wait(0.1) do
+            if player.Character and player.Character:FindFirstChild("Humanoid") then
+                player.Character.Humanoid.WalkSpeed = 35
+            end
+        end
+    end)
+end)
+addToggle(pageGeneral, "Jump Power", "Enable to activate Jump Power", function(v)
+    task.spawn(function()
+        while v and task.wait(0.1) do
+            if player.Character and player.Character:FindFirstChild("Humanoid") then
+                player.Character.Humanoid.JumpPower = 100
+            end
+        end
+    end)
+end)
+addToggle(pageGeneral, "Walk On Water", "Enable to walk on water", function(v) print("Walk On Water:", v) end)
+addToggle(pageGeneral, "Buso Haki", "Enable to activate Buso Haki", function(v) print("Buso Haki:", v) end)
+addToggle(pageGeneral, "Ken Haki", "Enable to activate Ken Haki", function(v) print("Ken Haki:", v) end)
+addToggle(pageGeneral, "Race V3", "Enable to activate Race V3", function(v) print("Race V3:", v) end)
+addToggle(pageGeneral, "Race V4", "Enable to activate Race V4", function(v) print("Race V4:", v) end)
+
+-- ==================== COMBAT TAB = ====================
+addToggle(pageCombat, "Aimbot", "Stick camera at target", function(v) print("Aimbot:", v) end)
+addToggle(pageCombat, "Silent Aim", "Silent aim skill, gun shot", function(v) print("Silent Aim:", v) end)
+addToggle(pageCombat, "FOV Circle", "Show the FOV circle on the screen", function(v) print("FOV Circle:", v) end)
+addToggle(pageCombat, "Attack Aura", "Attack aura to target player. (Melee, Sword)", function(v) print("Attack Aura:", v) end)
+addToggle(pageCombat, "Draw Red Line", "Draw the red line around the target", function(v) print("Draw Red Line:", v) end)
+addToggle(pageCombat, "Draw Sphere", "Draw the sphere around the target", function(v) print("Draw Sphere:", v) end)
+
+-- ==================== ESP TAB = ====================
+addToggle(pageESP, "Name", "Show the name of the player", function(v)
+    task.spawn(function()
+        while v and task.wait(1) do
+            for _, p in ipairs(Players:GetPlayers()) do
+                if p ~= player and p.Character and p.Character:FindFirstChild("Head") then
+                    if not p.Character.Head:FindFirstChild("GZ_ESP") then
+                        local bg = Instance.new("BillboardGui", p.Character.Head)
+                        bg.Name = "GZ_ESP"
+                        bg.Size = UDim2.new(0, 100, 0, 40)
+                        bg.StudsOffset = Vector3.new(0, 2.5, 0)
+                        bg.AlwaysOnTop = true
+                        local txt = Instance.new("TextLabel", bg)
+                        txt.Size = UDim2.new(1, 0, 1, 0)
+                        txt.BackgroundTransparency = 1
+                        txt.TextColor3 = Color3.fromRGB(255, 100, 100)
+                        txt.TextStrokeTransparency = 0
+                        txt.TextSize = 12
+                        txt.Font = Enum.Font.GothamBold
+                        txt.Text = p.Name
+                    end
+                end
+            end
+        end
+        for _, p in ipairs(Players:GetPlayers()) do
+            if p.Character and p.Character:FindFirstChild("Head") then
+                local esp = p.Character.Head:FindFirstChild("GZ_ESP")
+                if esp then esp:Destroy() end
+            end
+        end
+    end)
+end)
+addToggle(pageESP, "Skeleton", "Show the skeleton of the player", function(v) print("Skeleton ESP:", v) end)
+addToggle(pageESP, "Health", "Show the health of the player", function(v) print("Health ESP:", v) end)
+addToggle(pageESP, "Distance", "Show the distance of the player", function(v) print("Distance ESP:", v) end)
+addToggle(pageESP, "Team", "Show the team of the player", function(v) print("Team ESP:", v) end)
+addToggle(pageESP, "Level", "Show the level of the player", function(v) print("Level ESP:", v) end)
+addToggle(pageESP, "Bounty", "Show the bounty of the player", function(v) print("Bounty ESP:", v) end)
+addToggle(pageESP, "Ken Active", "Show the ken active of the player", function(v) print("Ken Active ESP:", v) end)
+addToggle(pageESP, "PvPState", "Show pvp status InCombat, Disable Pvp, Ready Pvp", function(v) print("PvpState ESP:", v) end)
+
+-- ==================== KEY BIND TAB = ====================
+local kbFrame = Instance.new("Frame", pageKeyBind)
+kbFrame.BackgroundColor3 = Color3.fromRGB(30, 30, 38)
+kbFrame.BorderSizePixel = 0
+kbFrame.Size = UDim2.new(1, -10, 0, 48)
+Instance.new("UICorner", kbFrame).CornerRadius = UDim.new(0, 6)
+
+local kbTitle = Instance.new("TextLabel", kbFrame)
+kbTitle.BackgroundTransparency = 1
+kbTitle.Position = UDim2.new(0, 12, 0, 6)
+kbTitle.Size = UDim2.new(0, 300, 0, 18)
+kbTitle.Font = Enum.Font.GothamBold
+kbTitle.Text = "Aimbot KeyBind"
+kbTitle.TextColor3 = Color3.fromRGB(230, 230, 235)
+kbTitle.TextSize = 13
+kbTitle.TextXAlignment = Enum.TextXAlignment.Left
+
+local kbDesc = Instance.new("TextLabel", kbFrame)
+kbDesc.BackgroundTransparency = 1
+kbDesc.Position = UDim2.new(0, 12, 0, 24)
+kbDesc.Size = UDim2.new(0, 300, 0, 16)
+kbDesc.Font = Enum.Font.Gotham
+kbDesc.Text = "The key to activate aimbot"
+kbDesc.TextColor3 = Color3.fromRGB(140, 140, 150)
+kbDesc.TextSize = 11
+kbDesc.TextXAlignment = Enum.TextXAlignment.Left
+
+local kbBox = Instance.new("TextBox", kbFrame)
+kbBox.BackgroundColor3 = Color3.fromRGB(45, 45, 55)
+kbBox.Position = UDim2.new(1, -45, 0.5, -12)
+kbBox.Size = UDim2.new(0, 35, 0, 24)
+kbBox.Font = Enum.Font.GothamBold
+kbBox.Text = "B"
+kbBox.TextColor3 = Color3.fromRGB(255, 255, 255)
+kbBox.TextSize = 12
+Instance.new("UICorner", kbBox).CornerRadius = UDim.new(0, 4)
+
+-- ==================== SERVER TAB = ====================
+addButton(pageServer, "Copy JobId", "Click to copy this server's JobId", function()
+    if setclipboard then setclipboard(game.JobId) end
+end)
+addButton(pageServer, "Teleport", "Teleport to target jobid.", function()
+    print("Teleport requested")
+end)
+addButton(pageServer, "Rejoin", "Rejoin in same server.", function()
+    TeleportService:TeleportToPlaceInstance(game.PlaceId, game.JobId, player)
+end)
+
+-- ==================== CONFIG TAB = ====================
+addButton(pageConfig, "Save Config", "Save current config.", function() print("Config Saved") end)
+addButton(pageConfig, "Reset Config", "Wipe all config.", function() print("Config Reset") end)
+addButton(pageConfig, "Wipe Workspace", "Delete all file in workspace.", function() print("Workspace wiped") end)
+
+-- Rainbow Text Animation Loop
+task.spawn(function()
+    while true do
+        local hue = (tick() % 5) / 5
+        RainbowText.TextColor3 = Color3.fromHSV(hue, 1, 1)
+        task.wait(0.03)
+    end
+end)
+
+-- Draggable Window Logic
+local dragging, dragInput, dragStart, startPos
+TopBar.InputBegan:Connect(function(input)
+    if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+        dragging = true
+        dragStart = input.Position
+        startPos = MainFrame.Position
+        input.Changed:Connect(function()
+            if input.UserInputState == Enum.UserInputState.End then dragging = false end
+        end)
+    end
+end)
+
+TopBar.InputChanged:Connect(function(input)
+    if input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch then
+        dragInput = input
+    end
+end)
+
+UserInputService.InputChanged:Connect(function(input)
+    if input == dragInput and dragging then
+        local delta = input.Position - dragStart
+        MainFrame.Position = UDim2.new(startPos.X.Scale, startPos.X.Offset + delta.X, startPos.Y.Scale, startPos.Y.Offset + delta.Y)
+    end
+end)
