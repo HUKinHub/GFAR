@@ -1,0 +1,260 @@
+local Players = game:GetService("Players")
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local player = Players.LocalPlayer or Players.PlayerAdded:Wait()
+local playerGui = player:WaitForChild("PlayerGui")
+
+if playerGui:FindFirstChild("BloxFruitsHub") then
+    playerGui.BloxFruitsHub:Destroy()
+end
+
+local screenGui = Instance.new("ScreenGui")
+screenGui.Name = "BloxFruitsHub"
+screenGui.ResetOnSpawn = false
+screenGui.Parent = playerGui
+
+local toggleButton = Instance.new("TextButton")
+toggleButton.Size = UDim2.new(0, 55, 0, 55)
+toggleButton.Position = UDim2.new(0, 20, 0, 150)
+toggleButton.BackgroundColor3 = Color3.fromRGB(35, 35, 45)
+toggleButton.TextColor3 = Color3.fromRGB(255, 255, 255)
+toggleButton.TextSize, toggleButton.Font = 12, Enum.Font.SourceSansBold
+toggleButton.Text = "BF\nHUB"
+toggleButton.Active, toggleButton.Draggable = true, true
+toggleButton.Parent = screenGui
+
+local tCorner = Instance.new("UICorner", toggleButton)
+tCorner.CornerRadius = UDim.new(1, 0)
+
+local mainFrame = Instance.new("Frame")
+mainFrame.Size = UDim2.new(0, 480, 0, 320)
+mainFrame.Position = UDim2.new(0.5, -240, 0.5, -160)
+mainFrame.BackgroundColor3 = Color3.fromRGB(25, 25, 35)
+mainFrame.BorderSizePixel = 0
+mainFrame.Visible = false
+mainFrame.Active, mainFrame.Draggable = true, true
+mainFrame.Parent = screenGui
+
+local mCorner = Instance.new("UICorner", mainFrame)
+mCorner.CornerRadius = UDim.new(0, 8)
+
+local topBar = Instance.new("Frame")
+topBar.Size = UDim2.new(1, 0, 0, 35)
+topBar.BackgroundColor3 = Color3.fromRGB(35, 35, 45)
+topBar.BorderSizePixel = 0
+topBar.Parent = mainFrame
+
+local tbCorner = Instance.new("UICorner", topBar)
+tbCorner.CornerRadius = UDim.new(0, 8)
+
+local titleLbl = Instance.new("TextLabel")
+titleLbl.Size = UDim2.new(1, -20, 1, 0)
+titleLbl.Position = UDim2.new(0, 10, 0, 0)
+titleLbl.BackgroundTransparency = 1
+titleLbl.TextColor3 = Color3.fromRGB(220, 220, 255)
+titleLbl.TextSize = 14
+titleLbl.Font = Enum.Font.SourceSansBold
+titleLbl.Text = "Blox Fruits | Min Gaming Style Hub"
+titleLbl.TextXAlignment = Enum.TextXAlignment.Left
+titleLbl.Parent = topBar
+
+toggleButton.MouseButton1Click:Connect(function()
+    mainFrame.Visible = not mainFrame.Visible
+end)
+
+local tabSelector = Instance.new("Frame")
+tabSelector.Size = UDim2.new(0, 110, 1, -45)
+tabSelector.Position = UDim2.new(0, 5, 0, 40)
+tabSelector.BackgroundColor3 = Color3.fromRGB(30, 30, 40)
+tabSelector.BorderSizePixel = 0
+tabSelector.Parent = mainFrame
+
+local tsLayout = Instance.new("UIListLayout", tabSelector)
+tsLayout.SortOrder = Enum.SortOrder.LayoutOrder
+tsLayout.Padding = UDim.new(0, 5)
+
+local container = Instance.new("Frame")
+container.Size = UDim2.new(1, -125, 1, -45)
+container.Position = UDim2.new(0, 120, 0, 40)
+container.BackgroundTransparency = 1
+container.Parent = mainFrame
+
+local tabs = {}
+local function createTab(name)
+    local sf = Instance.new("ScrollingFrame")
+    sf.Size = UDim2.new(1, 0, 1, 0)
+    sf.BackgroundTransparency = 1
+    sf.CanvasSize = UDim2.new(0, 0, 0, 0)
+    sf.AutomaticCanvasSize = Enum.AutomaticSize.Y
+    sf.ScrollBarThickness = 3
+    sf.Visible = false
+    sf.Parent = container
+
+    local layout = Instance.new("UIListLayout", sf)
+    layout.SortOrder = Enum.SortOrder.LayoutOrder
+    layout.Padding = UDim.new(0, 6)
+
+    local tabBtn = Instance.new("TextButton")
+    tabBtn.Size = UDim2.new(1, 0, 0, 30)
+    tabBtn.BackgroundColor3 = Color3.fromRGB(45, 45, 55)
+    tabBtn.TextColor3 = Color3.fromRGB(200, 200, 200)
+    tabBtn.TextSize, tabBtn.Font = 12, Enum.Font.SourceSansBold
+    tabBtn.Text = name
+    tabBtn.Parent = tabSelector
+
+    tabBtn.MouseButton1Click:Connect(function()
+        for _, t in pairs(tabs) do t.Visible = false end
+        sf.Visible = true
+    end)
+
+    if #tabs == 0 then sf.Visible = true end
+    table.insert(tabs, sf)
+    return sf
+end
+
+local tabGeneral = createTab("General")
+local tabMain = createTab("Main Farm")
+local tabCombat = createTab("Combat")
+local tabTeleport = createTab("Teleport")
+
+local function addToggle(tab, name, callback)
+    local f = Instance.new("Frame", tab)
+    f.Size = UDim2.new(1, -5, 0, 30)
+    f.BackgroundTransparency = 1
+
+    local lbl = Instance.new("TextLabel", f)
+    lbl.Size = UDim2.new(0, 200, 1, 0)
+    lbl.Position = UDim2.new(0, 5, 0, 0)
+    lbl.BackgroundTransparency = 1
+    lbl.TextColor3 = Color3.fromRGB(230, 230, 230)
+    lbl.TextSize, lbl.Font = 12, Enum.Font.SourceSans
+    lbl.Text = name
+    lbl.TextXAlignment = Enum.TextXAlignment.Left
+
+    local btn = Instance.new("TextButton", f)
+    btn.Size = UDim2.new(0, 65, 0, 24)
+    btn.Position = UDim2.new(1, -70, 0, 3)
+    btn.BackgroundColor3 = Color3.fromRGB(150, 40, 40)
+    btn.TextColor3 = Color3.fromRGB(255, 255, 255)
+    btn.TextSize, btn.Font = 11, Enum.Font.SourceSansBold
+    btn.Text = "OFF"
+
+    local active = false
+    btn.MouseButton1Click:Connect(function()
+        active = not active
+        btn.Text = active and "ON" or "OFF"
+        btn.BackgroundColor3 = active and Color3.fromRGB(40, 150, 70) or Color3.fromRGB(150, 40, 40)
+        callback(active)
+    end)
+end
+
+local function addButton(tab, name, callback)
+    local f = Instance.new("Frame", tab)
+    f.Size = UDim2.new(1, -5, 0, 30)
+    f.BackgroundTransparency = 1
+
+    local lbl = Instance.new("TextLabel", f)
+    lbl.Size = UDim2.new(0, 200, 1, 0)
+    lbl.Position = UDim2.new(0, 5, 0, 0)
+    lbl.BackgroundTransparency = 1
+    lbl.TextColor3 = Color3.fromRGB(230, 230, 230)
+    lbl.TextSize, lbl.Font = 12, Enum.Font.SourceSans
+    lbl.Text = name
+    lbl.TextXAlignment = Enum.TextXAlignment.Left
+
+    local btn = Instance.new("TextButton", f)
+    btn.Size = UDim2.new(0, 65, 0, 24)
+    btn.Position = UDim2.new(1, -70, 0, 3)
+    btn.BackgroundColor3 = Color3.fromRGB(120, 60, 150)
+    btn.TextColor3 = Color3.fromRGB(255, 255, 255)
+    btn.TextSize, btn.Font = 11, Enum.Font.SourceSansBold
+    btn.Text = "EXEC"
+
+    btn.MouseButton1Click:Connect(callback)
+end
+
+addToggle(tabGeneral, "WalkSpeed Boost (35)", function(active)
+    task.spawn(function()
+        while active and task.wait(0.1) do
+            if player.Character and player.Character:FindFirstChild("Humanoid") then
+                player.Character.Humanoid.WalkSpeed = 35
+            end
+        end
+    end)
+end)
+
+addToggle(tabGeneral, "Player ESP", function(active)
+    task.spawn(function()
+        while active and task.wait(1) do
+            for _, p in ipairs(Players:GetPlayers()) do
+                if p ~= player and p.Character and p.Character:FindFirstChild("Head") then
+                    if not p.Character.Head:FindFirstChild("BF_ESP") then
+                        local bg = Instance.new("BillboardGui", p.Character.Head)
+                        bg.Name = "BF_ESP"
+                        bg.Size = UDim2.new(0, 100, 0, 40)
+                        bg.StudsOffset = Vector3.new(0, 2.5, 0)
+                        bg.AlwaysOnTop = true
+                        local txt = Instance.new("TextLabel", bg)
+                        txt.Size = UDim2.new(1, 0, 1, 0)
+                        txt.BackgroundTransparency = 1
+                        txt.TextColor3 = Color3.fromRGB(255, 100, 100)
+                        txt.TextStrokeTransparency = 0
+                        txt.TextSize = 12
+                        txt.Font = Enum.Font.SourceSansBold
+                        txt.Text = p.Name
+                    end
+                end
+            end
+        end
+        for _, p in ipairs(Players:GetPlayers()) do
+            if p.Character and p.Character:FindFirstChild("Head") then
+                local esp = p.Character.Head:FindFirstChild("BF_ESP")
+                if esp then esp:Destroy() end
+            end
+        end
+    end)
+end)
+
+addToggle(tabMain, "Auto Farm Level / Quest", function(active)
+    print("Auto Farm Active: " .. tostring(active))
+end)
+
+addToggle(tabMain, "Double Quest Rewards", function(active)
+    print("Double Quest: " .. tostring(active))
+end)
+
+addToggle(tabMain, "Fast Attack (M1)", function(active)
+    print("Fast Attack: " .. tostring(active))
+end)
+
+addToggle(tabCombat, "Hitbox Extender (7x7)", function(active)
+    task.spawn(function()
+        while active and task.wait(0.5) do
+            for _, p in ipairs(Players:GetPlayers()) do
+                if p ~= player and p.Character and p.Character:FindFirstChild("HumanoidRootPart") then
+                    p.Character.HumanoidRootPart.Size = Vector3.new(7, 7, 7)
+                    p.Character.HumanoidRootPart.Transparency = 0.6
+                    p.Character.HumanoidRootPart.CanCollide = false
+                end
+            end
+        end
+        for _, p in ipairs(Players:GetPlayers()) do
+            if p.Character and p.Character:FindFirstChild("HumanoidRootPart") then
+                p.Character.HumanoidRootPart.Size = Vector3.new(2, 2, 1)
+                p.Character.HumanoidRootPart.Transparency = 1
+            end
+        end
+    end)
+end)
+
+local function tp(pos)
+    pcall(function()
+        if player.Character and player.Character:FindFirstChild("HumanoidRootPart") then
+            player.Character.HumanoidRootPart.CFrame = CFrame.new(pos)
+        end
+    end)
+end
+
+addButton(tabTeleport, "TP Cafe (Spawn 2)", function() tp(Vector3.new(-387.5, 75.8, 169.3)) end)
+addButton(tabTeleport, "TP Mansion", function() tp(Vector3.new(-12463.8, 375.4, -7552.1)) end)
+addButton(tabTeleport, "TP Green Zone", function() tp(Vector3.new(2284.9, 15.1, 853.5)) end)
+addButton(tabTeleport, "TP Snow Mountain", function() tp(Vector3.new(602.8, 402.5, -5354.8)) end)
