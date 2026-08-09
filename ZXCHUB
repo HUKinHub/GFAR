@@ -1,0 +1,205 @@
+local Players = game:GetService("Players")
+local player = Players.LocalPlayer
+local playerGui = player:WaitForChild("PlayerGui")
+
+if playerGui:FindFirstChild("GZGui") then
+    playerGui.GZGui:Destroy()
+end
+
+local screenGui = Instance.new("ScreenGui")
+screenGui.Name = "GZGui"
+screenGui.ResetOnSpawn = false
+screenGui.Parent = playerGui
+
+local toggleButton = Instance.new("TextButton")
+toggleButton.Size = UDim2.new(0, 45, 0, 45)
+toggleButton.Position = UDim2.new(0, 20, 0, 150)
+toggleButton.BackgroundColor3 = Color3.fromRGB(0, 120, 255)
+toggleButton.TextColor3 = Color3.fromRGB(255, 255, 255)
+toggleButton.TextSize = 16
+toggleButton.Font = Enum.Font.SourceSansBold
+toggleButton.Text = "GZ"
+toggleButton.Active = true
+toggleButton.Draggable = true
+toggleButton.Parent = screenGui
+
+local toggleCorner = Instance.new("UICorner")
+toggleCorner.CornerRadius = UDim.new(1, 0)
+toggleCorner.Parent = toggleButton
+
+local mainFrame = Instance.new("Frame")
+mainFrame.Size = UDim2.new(0, 300, 0, 260)
+mainFrame.Position = UDim2.new(0.5, -150, 0.5, -130)
+mainFrame.BackgroundColor3 = Color3.fromRGB(25, 25, 25)
+mainFrame.BorderSizePixel = 0
+mainFrame.Visible = false
+mainFrame.Active = true
+mainFrame.Draggable = true
+mainFrame.Parent = screenGui
+
+local mainCorner = Instance.new("UICorner")
+mainCorner.CornerRadius = UDim.new(0, 8)
+mainCorner.Parent = mainFrame
+
+local titleLabel = Instance.new("TextLabel")
+titleLabel.Size = UDim2.new(1, 0, 0, 35)
+titleLabel.BackgroundColor3 = Color3.fromRGB(35, 35, 35)
+titleLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
+titleLabel.TextSize = 14
+titleLabel.Font = Enum.Font.SourceSansBold
+titleLabel.Text = " GZ Menu | Control Panel"
+titleLabel.TextXAlignment = Enum.TextXAlignment.Left
+titleLabel.Parent = mainFrame
+
+local titleCorner = Instance.new("UICorner")
+titleCorner.CornerRadius = UDim.new(0, 8)
+titleCorner.Parent = titleLabel
+
+toggleButton.MouseButton1Click:Connect(function()
+    mainFrame.Visible = not mainFrame.Visible
+end)
+
+local function createInputFeature(name, defaultVal, yPos, onValueChanged)
+    local label = Instance.new("TextLabel")
+    label.Size = UDim2.new(0, 130, 0, 30)
+    label.Position = UDim2.new(0, 15, 0, yPos)
+    label.BackgroundTransparency = 1
+    label.TextColor3 = Color3.fromRGB(220, 220, 220)
+    label.TextSize = 13
+    label.Font = Enum.Font.SourceSans
+    label.Text = name
+    label.TextXAlignment = Enum.TextXAlignment.Left
+    label.Parent = mainFrame
+
+    local textBox = Instance.new("TextBox")
+    textBox.Size = UDim2.new(0, 50, 0, 26)
+    textBox.Position = UDim2.new(0, 150, 0, yPos + 2)
+    textBox.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
+    textBox.TextColor3 = Color3.fromRGB(255, 255, 255)
+    textBox.TextSize = 12
+    textBox.Font = Enum.Font.SourceSans
+    textBox.Text = tostring(defaultVal)
+    textBox.Parent = mainFrame
+
+    local tbCorner = Instance.new("UICorner")
+    tbCorner.CornerRadius = UDim.new(0, 4)
+    tbCorner.Parent = textBox
+
+    local toggleBtn = Instance.new("TextButton")
+    toggleBtn.Size = UDim2.new(0, 65, 0, 26)
+    toggleBtn.Position = UDim2.new(0, 215, 0, yPos + 2)
+    toggleBtn.BackgroundColor3 = Color3.fromRGB(160, 40, 40)
+    toggleBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+    toggleBtn.TextSize = 11
+    toggleBtn.Font = Enum.Font.SourceSansBold
+    toggleBtn.Text = "OFF"
+    toggleBtn.Parent = mainFrame
+
+    local tBtnCorner = Instance.new("UICorner")
+    tBtnCorner.CornerRadius = UDim.new(0, 4)
+    tBtnCorner.Parent = toggleBtn
+
+    local active = false
+    toggleBtn.MouseButton1Click:Connect(function()
+        active = not active
+        if active then
+            toggleBtn.Text = "ON"
+            toggleBtn.BackgroundColor3 = Color3.fromRGB(40, 160, 100)
+        else
+            toggleBtn.Text = "OFF"
+            toggleBtn.BackgroundColor3 = Color3.fromRGB(160, 40, 40)
+        end
+        onValueChanged(active, tonumber(textBox.Text) or defaultVal)
+    end)
+end
+
+createInputFeature("Move Speed", 29, 45, function(active, val)
+    spawn(function()
+        while active and task.wait(0.1) do
+            local char = player.Character
+            if char and char:FindFirstChild("Humanoid") then
+                char.Humanoid.WalkSpeed = val
+            end
+        end
+    end)
+end)
+
+createInputFeature("Jump Power", 50, 85, function(active, val)
+    spawn(function()
+        while active and task.wait(0.1) do
+            local char = player.Character
+            if char and char:FindFirstChild("Humanoid") then
+                char.Humanoid.UseJumpPower = true
+                char.Humanoid.JumpPower = val
+            end
+        end
+    end)
+end)
+
+local function createButtonFeature(name, yPos, callback)
+    local label = Instance.new("TextLabel")
+    label.Size = UDim2.new(0, 160, 0, 30)
+    label.Position = UDim2.new(0, 15, 0, yPos)
+    label.BackgroundTransparency = 1
+    label.TextColor3 = Color3.fromRGB(220, 220, 220)
+    label.TextSize = 13
+    label.Font = Enum.Font.SourceSans
+    label.Text = name
+    label.TextXAlignment = Enum.TextXAlignment.Left
+    label.Parent = mainFrame
+
+    local btn = Instance.new("TextButton")
+    btn.Size = UDim2.new(0, 95, 0, 26)
+    btn.Position = UDim2.new(0, 185, 0, yPos + 2)
+    btn.BackgroundColor3 = Color3.fromRGB(0, 120, 200)
+    btn.TextColor3 = Color3.fromRGB(255, 255, 255)
+    btn.TextSize = 11
+    btn.Font = Enum.Font.SourceSansBold
+    btn.Text = "TELEPORT"
+    btn.Parent = mainFrame
+
+    local btnCorner = Instance.new("UICorner")
+    btnCorner.CornerRadius = UDim.new(0, 4)
+    btnCorner.Parent = btn
+
+    btn.MouseButton1Click:Connect(callback)
+end
+
+local function teleportWeapon(keyword)
+    local char = player.Character
+    if not char or not char:FindFirstChild("HumanoidRootPart") then return end
+    local hrp = char.HumanoidRootPart
+    local found = false
+
+    for _, obj in ipairs(workspace:GetDescendants()) do
+        if obj:IsA("Tool") and string.find(string.lower(obj.Name), string.lower(keyword)) then
+            if obj:FindFirstChild("Handle") then
+                obj.Handle.CFrame = hrp.CFrame + Vector3.new(0, 2, 0)
+                found = true
+            else
+                obj.Parent = player.Backpack
+                found = true
+            end
+        end
+    end
+
+    if not found then
+        local rs = game:GetService("ReplicatedStorage")
+        for _, obj in ipairs(rs:GetDescendants()) do
+            if obj:IsA("Tool") and string.find(string.lower(obj.Name), string.lower(keyword)) then
+                local clone = obj:Clone()
+                clone.Parent = player.Backpack
+                found = true
+                break
+            end
+        end
+    end
+end
+
+createButtonFeature("Teleport Shotgun", 135, function()
+    teleportWeapon("shotgun")
+end)
+
+createButtonFeature("Teleport MP5", 175, function()
+    teleportWeapon("mp5")
+end)
