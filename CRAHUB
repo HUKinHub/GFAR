@@ -1,0 +1,400 @@
+local Players = game:GetService("Players")
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local player = Players.LocalPlayer
+local playerGui = player:WaitForChild("PlayerGui")
+
+if playerGui:FindFirstChild("GZGui") then
+    playerGui.GZGui:Destroy()
+end
+
+local screenGui = Instance.new("ScreenGui")
+screenGui.Name = "GZGui"
+screenGui.ResetOnSpawn = false
+screenGui.Parent = playerGui
+
+local toggleButton = Instance.new("TextButton")
+toggleButton.Size = UDim2.new(0, 65, 0, 65)
+toggleButton.Position = UDim2.new(0, 20, 0, 150)
+toggleButton.BackgroundColor3 = Color3.fromRGB(255, 182, 193)
+toggleButton.TextColor3 = Color3.fromRGB(255, 255, 255)
+toggleButton.TextSize = 12
+toggleButton.Font = Enum.Font.SourceSansBold
+toggleButton.Text = "GZ\nby GC"
+toggleButton.Active = true
+toggleButton.Draggable = true
+toggleButton.Parent = screenGui
+
+local toggleCorner = Instance.new("UICorner")
+toggleCorner.CornerRadius = UDim.new(1, 0)
+toggleCorner.Parent = toggleButton
+
+local toggleGradient = Instance.new("UIGradient")
+toggleGradient.Color = ColorSequence.new({
+    ColorSequenceKeypoint.new(0, Color3.fromRGB(255, 182, 193)),
+    ColorSequenceKeypoint.new(0.5, Color3.fromRGB(221, 160, 221)),
+    ColorSequenceKeypoint.new(1, Color3.fromRGB(176, 224, 230))
+})
+toggleGradient.Parent = toggleButton
+
+local mainFrame = Instance.new("Frame")
+mainFrame.Size = UDim2.new(0, 320, 0, 400)
+mainFrame.Position = UDim2.new(0.5, -160, 0.5, -200)
+mainFrame.BackgroundColor3 = Color3.fromRGB(30, 20, 35)
+mainFrame.BorderSizePixel = 0
+mainFrame.Visible = false
+mainFrame.Active = true
+mainFrame.Draggable = true
+mainFrame.Parent = screenGui
+
+local mainCorner = Instance.new("UICorner")
+mainCorner.CornerRadius = UDim.new(0, 10)
+mainCorner.Parent = mainFrame
+
+local titleLabel = Instance.new("TextLabel")
+titleLabel.Size = UDim2.new(1, 0, 0, 35)
+titleLabel.BackgroundColor3 = Color3.fromRGB(45, 30, 50)
+titleLabel.TextColor3 = Color3.fromRGB(255, 192, 203)
+titleLabel.TextSize = 14
+titleLabel.Font = Enum.Font.SourceSansBold
+titleLabel.Text = " GZ Menu | Anime Edition (by GC)"
+titleLabel.TextXAlignment = Enum.TextXAlignment.Left
+titleLabel.Parent = mainFrame
+
+local titleCorner = Instance.new("UICorner")
+titleCorner.CornerRadius = UDim.new(0, 10)
+titleCorner.Parent = titleLabel
+
+toggleButton.MouseButton1Click:Connect(function()
+    mainFrame.Visible = not mainFrame.Visible
+end)
+
+local scrollingFrame = Instance.new("ScrollingFrame")
+scrollingFrame.Size = UDim2.new(1, -10, 1, -45)
+scrollingFrame.Position = UDim2.new(0, 5, 0, 40)
+scrollingFrame.BackgroundTransparency = 1
+scrollingFrame.CanvasSize = UDim2.new(0, 0, 0, 0)
+scrollingFrame.AutomaticCanvasSize = Enum.AutomaticSize.Y
+scrollingFrame.ScrollBarThickness = 4
+scrollingFrame.Parent = mainFrame
+
+local uiListLayout = Instance.new("UIListLayout")
+uiListLayout.SortOrder = Enum.SortOrder.LayoutOrder
+uiListLayout.Padding = UDim.new(0, 6)
+uiListLayout.Parent = scrollingFrame
+
+local order = 0
+
+local function createInputFeature(name, defaultVal, callback)
+    order = order + 1
+    local f = Instance.new("Frame")
+    f.Size = UDim2.new(1, -10, 0, 32)
+    f.BackgroundTransparency = 1
+    f.LayoutOrder = order
+    f.Parent = scrollingFrame
+
+    local lbl = Instance.new("TextLabel")
+    lbl.Size = UDim2.new(0, 110, 1, 0)
+    lbl.Position = UDim2.new(0, 5, 0, 0)
+    lbl.BackgroundTransparency = 1
+    lbl.TextColor3 = Color3.fromRGB(240, 220, 240)
+    lbl.TextSize = 12
+    lbl.Font = Enum.Font.SourceSans
+    lbl.Text = name
+    lbl.TextXAlignment = Enum.TextXAlignment.Left
+    lbl.Parent = f
+
+    local box = Instance.new("TextBox")
+    box.Size = UDim2.new(0, 45, 0, 26)
+    box.Position = UDim2.new(0, 115, 0, 3)
+    box.BackgroundColor3 = Color3.fromRGB(50, 35, 60)
+    box.TextColor3 = Color3.fromRGB(255, 255, 255)
+    box.TextSize = 12
+    box.Font = Enum.Font.SourceSans
+    box.Text = tostring(defaultVal)
+    box.Parent = f
+
+    local bc1 = Instance.new("UICorner")
+    bc1.CornerRadius = UDim.new(0, 5)
+    bc1.Parent = box
+
+    local btn = Instance.new("TextButton")
+    btn.Size = UDim2.new(0, 75, 0, 26)
+    btn.Position = UDim2.new(1, -80, 0, 3)
+    btn.BackgroundColor3 = Color3.fromRGB(180, 50, 70)
+    btn.TextColor3 = Color3.fromRGB(255, 255, 255)
+    btn.TextSize = 12
+    btn.Font = Enum.Font.SourceSansBold
+    btn.Text = "OFF"
+    btn.Parent = f
+
+    local bc2 = Instance.new("UICorner")
+    bc2.CornerRadius = UDim.new(0, 5)
+    bc2.Parent = btn
+
+    local active = false
+    btn.MouseButton1Click:Connect(function()
+        active = not active
+        btn.Text = active and "ON" or "OFF"
+        btn.BackgroundColor3 = active and Color3.fromRGB(60, 160, 100) or Color3.fromRGB(180, 50, 70)
+        local val = tonumber(box.Text) or defaultVal
+        callback(active, val)
+    end)
+end
+
+local function addToggle(name, callback)
+    order = order + 1
+    local f = Instance.new("Frame")
+    f.Size = UDim2.new(1, -10, 0, 32)
+    f.BackgroundTransparency = 1
+    f.LayoutOrder = order
+    f.Parent = scrollingFrame
+
+    local lbl = Instance.new("TextLabel")
+    lbl.Size = UDim2.new(0, 180, 1, 0)
+    lbl.Position = UDim2.new(0, 5, 0, 0)
+    lbl.BackgroundTransparency = 1
+    lbl.TextColor3 = Color3.fromRGB(240, 220, 240)
+    lbl.TextSize = 12
+    lbl.Font = Enum.Font.SourceSans
+    lbl.Text = name
+    lbl.TextXAlignment = Enum.TextXAlignment.Left
+    lbl.Parent = f
+
+    local btn = Instance.new("TextButton")
+    btn.Size = UDim2.new(0, 90, 0, 26)
+    btn.Position = UDim2.new(1, -95, 0, 3)
+    btn.BackgroundColor3 = Color3.fromRGB(180, 50, 70)
+    btn.TextColor3 = Color3.fromRGB(255, 255, 255)
+    btn.TextSize = 12
+    btn.Font = Enum.Font.SourceSansBold
+    btn.Text = "OFF"
+    btn.Parent = f
+
+    local bc = Instance.new("UICorner")
+    bc.CornerRadius = UDim.new(0, 5)
+    bc.Parent = btn
+
+    local active = false
+    btn.MouseButton1Click:Connect(function()
+        active = not active
+        btn.Text = active and "ON" or "OFF"
+        btn.BackgroundColor3 = active and Color3.fromRGB(60, 160, 100) or Color3.fromRGB(180, 50, 70)
+        callback(active)
+    end)
+end
+
+local function addButton(name, callback)
+    order = order + 1
+    local f = Instance.new("Frame")
+    f.Size = UDim2.new(1, -10, 0, 32)
+    f.BackgroundTransparency = 1
+    f.LayoutOrder = order
+    f.Parent = scrollingFrame
+
+    local lbl = Instance.new("TextLabel")
+    lbl.Size = UDim2.new(0, 180, 1, 0)
+    lbl.Position = UDim2.new(0, 5, 0, 0)
+    lbl.BackgroundTransparency = 1
+    lbl.TextColor3 = Color3.fromRGB(240, 220, 240)
+    lbl.TextSize = 12
+    lbl.Font = Enum.Font.SourceSans
+    lbl.Text = name
+    lbl.TextXAlignment = Enum.TextXAlignment.Left
+    lbl.Parent = f
+
+    local btn = Instance.new("TextButton")
+    btn.Size = UDim2.new(0, 90, 0, 26)
+    btn.Position = UDim2.new(1, -95, 0, 3)
+    btn.BackgroundColor3 = Color3.fromRGB(200, 100, 170)
+    btn.TextColor3 = Color3.fromRGB(255, 255, 255)
+    btn.TextSize = 12
+    btn.Font = Enum.Font.SourceSansBold
+    btn.Text = "EXEC"
+    btn.Parent = f
+
+    local bc = Instance.new("UICorner")
+    bc.CornerRadius = UDim.new(0, 5)
+    bc.Parent = btn
+
+    btn.MouseButton1Click:Connect(callback)
+end
+
+-- 1. Move Speed
+local speedState = {active = false}
+createInputFeature("Move Speed", 28, function(active, val)
+    speedState.active = active
+    if active then
+        task.spawn(function()
+            while speedState.active and task.wait(0.1) do
+                local char = player.Character
+                if char and char:FindFirstChild("Humanoid") then
+                    char.Humanoid.WalkSpeed = val
+                end
+            end
+        end)
+    end
+end)
+
+-- 2. Anti-Kick Protection
+addToggle("Anti-Kick Protection", function(active)
+    if active then
+        pcall(function()
+            local mt = getrawmetatable(game)
+            setreadonly(mt, false)
+            local old = mt.__namecall
+            mt.__namecall = newcclosure(function(self, ...)
+                if getnamecallmethod() == "Kick" or getnamecallmethod() == "kick" then
+                    return
+                end
+                return old(self, ...)
+            end)
+            setreadonly(mt, true)
+        end)
+    end
+end)
+
+-- 3. Hitbox Size (สามารถปรับขนาดได้ตามช่องกรอก และปิดแล้วรีเซ็ตกลับเป็นปกติทันที)
+local hitboxState = {active = false}
+createInputFeature("Hitbox Size", 7, function(active, val)
+    hitboxState.active = active
+    if active then
+        task.spawn(function()
+            while hitboxState.active do
+                for _, p in ipairs(Players:GetPlayers()) do
+                    if not hitboxState.active then break end
+                    if p ~= player and p.Character and p.Character:FindFirstChild("HumanoidRootPart") then
+                        local hrp = p.Character.HumanoidRootPart
+                        hrp.Size = Vector3.new(val, val, val)
+                        hrp.Transparency = 0.6
+                        hrp.CanCollide = false
+                        if not hrp:FindFirstChild("GZHitboxVisual") then
+                            local sb = Instance.new("SelectionBox")
+                            sb.Name = "GZHitboxVisual"
+                            sb.Adornee = hrp
+                            sb.Color3 = Color3.fromRGB(135, 206, 250)
+                            sb.LineThickness = 0.05
+                            sb.Parent = hrp
+                        end
+                    end
+                end
+                task.wait(0.5)
+            end
+            -- ล้างค่า Hitbox เมื่อปิด
+            for _, p in ipairs(Players:GetPlayers()) do
+                if p.Character and p.Character:FindFirstChild("HumanoidRootPart") then
+                    local hrp = p.Character.HumanoidRootPart
+                    hrp.Size = Vector3.new(2, 2, 1)
+                    hrp.Transparency = 1
+                    local sb = hrp:FindFirstChild("GZHitboxVisual")
+                    if sb then sb:Destroy() end
+                end
+            end
+        end)
+    else
+        for _, p in ipairs(Players:GetPlayers()) do
+            if p.Character and p.Character:FindFirstChild("HumanoidRootPart") then
+                local hrp = p.Character.HumanoidRootPart
+                hrp.Size = Vector3.new(2, 2, 1)
+                hrp.Transparency = 1
+                local sb = hrp:FindFirstChild("GZHitboxVisual")
+                if sb then sb:Destroy() end
+            end
+        end
+    end
+end)
+
+-- 4. Player ESP (ปิดแล้วลบป้ายชื่อออกทันที)
+local espState = {active = false}
+addToggle("Player ESP", function(active)
+    espState.active = active
+    if active then
+        task.spawn(function()
+            while espState.active do
+                for _, p in ipairs(Players:GetPlayers()) do
+                    if not espState.active then break end
+                    if p ~= player and p.Character and p.Character:FindFirstChild("Head") then
+                        if not p.Character.Head:FindFirstChild("GZ_ESP") then
+                            local bg = Instance.new("BillboardGui")
+                            bg.Name = "GZ_ESP"
+                            bg.Size = UDim2.new(0, 100, 0, 40)
+                            bg.StudsOffset = Vector3.new(0, 2.5, 0)
+                            bg.AlwaysOnTop = true
+                            bg.Parent = p.Character.Head
+
+                            local txt = Instance.new("TextLabel")
+                            txt.Size = UDim2.new(1, 0, 1, 0)
+                            txt.BackgroundTransparency = 1
+                            txt.TextColor3 = Color3.fromRGB(255, 150, 200)
+                            txt.TextStrokeTransparency = 0
+                            txt.TextSize = 12
+                            txt.Font = Enum.Font.SourceSansBold
+                            txt.Text = p.Name
+                            txt.Parent = bg
+                        end
+                    end
+                end
+                task.wait(1)
+            end
+            -- ลบ ESP เมื่อปิด
+            for _, p in ipairs(Players:GetPlayers()) do
+                if p.Character and p.Character:FindFirstChild("Head") then
+                    local esp = p.Character.Head:FindFirstChild("GZ_ESP")
+                    if esp then esp:Destroy() end
+                end
+            end
+        end)
+    else
+        for _, p in ipairs(Players:GetPlayers()) do
+            if p.Character and p.Character:FindFirstChild("Head") then
+                local esp = p.Character.Head:FindFirstChild("GZ_ESP")
+                if esp then esp:Destroy() end
+            end
+        end
+    end
+end)
+
+-- ระบบดึงปืน (แก้ปัญหาไปโดนปืนคนอื่น/ตัวผู้เล่นวาร์ป)
+local function getWeapon(gunName)
+    local toolsFolder = ReplicatedStorage:FindFirstChild("Tools")
+    if toolsFolder and toolsFolder:FindFirstChild("Guns") then
+        local gunObj = toolsFolder.Guns:FindFirstChild(gunName)
+        if gunObj then
+            local clone = gunObj:Clone()
+            clone.Parent = player.Backpack
+            return
+        end
+    end
+    for _, obj in ipairs(ReplicatedStorage:GetDescendants()) do
+        if obj:IsA("Tool") and string.lower(obj.Name) == string.lower(gunName) then
+            local clone = obj:Clone()
+            clone.Parent = player.Backpack
+            return
+        end
+    end
+end
+
+addButton("Get AK-47", function() getWeapon("AK-47") end)
+addButton("Get M4A1", function() getWeapon("M4A1") end)
+addButton("Get MP5", function() getWeapon("MP5") end)
+addButton("Get Remington 870", function() getWeapon("Remington 870") end)
+addButton("Get M700", function() getWeapon("M700") end)
+addButton("Get FAL", function() getWeapon("FAL") end)
+addButton("Get Revolver", function() getWeapon("Revolver") end)
+addButton("Get M9", function() getWeapon("M9") end)
+addButton("Get Taser", function() getWeapon("Taser") end)
+
+local function tpToPosition(pos)
+    local char = player.Character
+    if char and char:FindFirstChild("HumanoidRootPart") then
+        char.HumanoidRootPart.CFrame = CFrame.new(pos)
+    end
+end
+
+addButton("TP Guard Spawn", function() tpToPosition(Vector3.new(799.1, 105.3, 2299.0)) end)
+addButton("TP Administration", function() tpToPosition(Vector3.new(748.9, 103.8, 2340.6)) end)
+addButton("TP Armory", function() tpToPosition(Vector3.new(830.3, 105.5, 2242.5)) end)
+addButton("TP Nexus", function() tpToPosition(Vector3.new(917.3, 104.7, 2392.6)) end)
+addButton("TP Courtyard", function() tpToPosition(Vector3.new(752.7, 101.9, 2571.8)) end)
+addButton("TP Kitchen", function() tpToPosition(Vector3.new(916.5, 112.3, 2225.4)) end)
+addButton("TP Cells", function() tpToPosition(Vector3.new(915.8, 112.0, 2456.6)) end)
+addButton("TP Prison Main", function() tpToPosition(Vector3.new(773.6, 88.5, 2327.4)) end)
