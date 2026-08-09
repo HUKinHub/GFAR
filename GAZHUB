@@ -1,0 +1,153 @@
+local Players = game:GetService("Players")
+local player = Players.LocalPlayer
+local playerGui = player:WaitForChild("PlayerGui")
+
+if playerGui:FindFirstChild("GZGui") then
+    playerGui.GZGui:Destroy()
+end
+
+local screenGui = Instance.new("ScreenGui")
+screenGui.Name = "GZGui"
+screenGui.ResetOnSpawn = false
+screenGui.Parent = playerGui
+
+local toggleButton = Instance.new("TextButton")
+toggleButton.Size = UDim2.new(0, 45, 0, 45)
+toggleButton.Position = UDim2.new(0, 20, 0, 150)
+toggleButton.BackgroundColor3 = Color3.fromRGB(0, 120, 255)
+toggleButton.TextColor3 = Color3.fromRGB(255, 255, 255)
+toggleButton.TextSize = 16
+toggleButton.Font = Enum.Font.SourceSansBold
+toggleButton.Text = "GZ"
+toggleButton.Active = true
+toggleButton.Draggable = true
+toggleButton.Parent = screenGui
+
+local toggleCorner = Instance.new("UICorner")
+toggleCorner.CornerRadius = UDim.new(1, 0)
+toggleCorner.Parent = toggleButton
+
+local mainFrame = Instance.new("Frame")
+mainFrame.Size = UDim2.new(0, 300, 0, 310)
+mainFrame.Position = UDim2.new(0.5, -150, 0.5, -155)
+mainFrame.BackgroundColor3 = Color3.fromRGB(25, 25, 25)
+mainFrame.BorderSizePixel = 0
+mainFrame.Visible = false
+mainFrame.Active = true
+mainFrame.Draggable = true
+mainFrame.Parent = screenGui
+
+local mainCorner = Instance.new("UICorner")
+mainCorner.CornerRadius = UDim.new(0, 8)
+mainCorner.Parent = mainFrame
+
+local titleLabel = Instance.new("TextLabel")
+titleLabel.Size = UDim2.new(1, 0, 0, 35)
+titleLabel.BackgroundColor3 = Color3.fromRGB(35, 35, 35)
+titleLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
+titleLabel.TextSize = 14
+titleLabel.Font = Enum.Font.SourceSansBold
+titleLabel.Text = " GZ Menu | Fisch Edition"
+titleLabel.TextXAlignment = Enum.TextXAlignment.Left
+titleLabel.Parent = mainFrame
+
+local titleCorner = Instance.new("UICorner")
+titleCorner.CornerRadius = UDim.new(0, 8)
+titleCorner.Parent = titleLabel
+
+toggleButton.MouseButton1Click:Connect(function()
+    mainFrame.Visible = not mainFrame.Visible
+end)
+
+local function createToggleFeature(name, yPos, onToggled)
+    local label = Instance.new("TextLabel")
+    label.Size = UDim2.new(0, 160, 0, 30)
+    label.Position = UDim2.new(0, 15, 0, yPos)
+    label.BackgroundTransparency = 1
+    label.TextColor3 = Color3.fromRGB(220, 220, 220)
+    label.TextSize = 13
+    label.Font = Enum.Font.SourceSans
+    label.Text = name
+    label.TextXAlignment = Enum.TextXAlignment.Left
+    label.Parent = mainFrame
+
+    local toggleBtn = Instance.new("TextButton")
+    toggleBtn.Size = UDim2.new(0, 95, 0, 26)
+    toggleBtn.Position = UDim2.new(0, 185, 0, yPos + 2)
+    toggleBtn.BackgroundColor3 = Color3.fromRGB(160, 40, 40)
+    toggleBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+    toggleBtn.TextSize = 11
+    toggleBtn.Font = Enum.Font.SourceSansBold
+    toggleBtn.Text = "OFF"
+    toggleBtn.Parent = mainFrame
+
+    local btnCorner = Instance.new("UICorner")
+    btnCorner.CornerRadius = UDim.new(0, 4)
+    btnCorner.Parent = toggleBtn
+
+    local active = false
+    toggleBtn.MouseButton1Click:Connect(function()
+        active = not active
+        if active then
+            toggleBtn.Text = "ON"
+            toggleBtn.BackgroundColor3 = Color3.fromRGB(40, 160, 100)
+        else
+            toggleBtn.Text = "OFF"
+            toggleBtn.BackgroundColor3 = Color3.fromRGB(160, 40, 40)
+        end
+        onToggled(active)
+    end)
+end
+
+createToggleFeature("Auto Shake", 45, function(active)
+    task.spawn(function()
+        while active and task.wait(0.05) do
+            pcall(function()
+                for _, gui in ipairs(playerGui:GetDescendants()) do
+                    if gui:IsA("TextButton") and (string.lower(gui.Text) == "shake" or string.lower(gui.Name) == "shake") then
+                        gui.MouseButton1Click:Fire()
+                    end
+                end
+            end)
+        end
+    end)
+end)
+
+local function createTeleportButton(name, targetCFrame, yPos)
+    local label = Instance.new("TextLabel")
+    label.Size = UDim2.new(0, 160, 0, 30)
+    label.Position = UDim2.new(0, 15, 0, yPos)
+    label.BackgroundTransparency = 1
+    label.TextColor3 = Color3.fromRGB(220, 220, 220)
+    label.TextSize = 13
+    label.Font = Enum.Font.SourceSans
+    label.Text = name
+    label.TextXAlignment = Enum.TextXAlignment.Left
+    label.Parent = mainFrame
+
+    local btn = Instance.new("TextButton")
+    btn.Size = UDim2.new(0, 95, 0, 26)
+    btn.Position = UDim2.new(0, 185, 0, yPos + 2)
+    btn.BackgroundColor3 = Color3.fromRGB(0, 120, 200)
+    btn.TextColor3 = Color3.fromRGB(255, 255, 255)
+    btn.TextSize = 11
+    btn.Font = Enum.Font.SourceSansBold
+    btn.Text = "TELEPORT"
+    btn.Parent = mainFrame
+
+    local btnCorner = Instance.new("UICorner")
+    btnCorner.CornerRadius = UDim.new(0, 4)
+    btnCorner.Parent = btn
+
+    btn.MouseButton1Click:Connect(function()
+        local char = player.Character
+        if char and char:FindFirstChild("HumanoidRootPart") then
+            char.HumanoidRootPart.CFrame = targetCFrame
+        end
+    end)
+end
+
+createTeleportButton("TP Moosewood", CFrame.new(380, 133, 230), 95)
+createTeleportButton("TP Roslit Bay", CFrame.new(-1450, 135, 715), 135)
+createTeleportButton("TP Sunstone", CFrame.new(-935, 133, -1135), 175)
+createTeleportButton("TP Desolate Deep", CFrame.new(3095, -700, 3130), 215)
