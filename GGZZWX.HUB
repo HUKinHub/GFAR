@@ -1,0 +1,960 @@
+--[[
+    ================================================================================
+    🌈 [GZHUB] UNIVERSAL TROLL & UTILITY SCRIPT | CREATED BY GC
+    📌 สคริปต์แกล้งคน & ม็อดตัวละคร (ใช้งานได้ทุกแมพ 100% FE Compatible)
+    ✨ UI GZHUB ขอบสายรุ้งหมุนวนรอบหน้าจอ (Rainbow Running Border)
+    ✨ ปุ่มเปิด-ปิด UI ข้อความสายรุ้งเคลื่อนไหว "GZ byGC"
+    ================================================================================
+--]]
+
+-- 1. Load Services & Setup
+local Players = game:GetService("Players")
+local RunService = game:GetService("RunService")
+local UserInputService = game:GetService("UserInputService")
+local TweenService = game:GetService("TweenService")
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local Workspace = game:GetService("Workspace")
+local VirtualUser = game:GetService("VirtualUser")
+local StarterGui = game:GetService("StarterGui")
+local CoreGui = game:GetService("CoreGui")
+
+local LocalPlayer = Players.LocalPlayer
+local Camera = Workspace.CurrentCamera
+local Mouse = LocalPlayer:GetMouse()
+
+-- Anti AFK
+LocalPlayer.Idled:Connect(function()
+    VirtualUser:CaptureController()
+    VirtualUser:ClickButton2(Vector2.new(0, 0))
+end)
+
+-- 2. Global Configurations
+getgenv().GZHUB = {
+    TargetPlayer = "",
+    FlingTarget = false,
+    FlingAll = false,
+    FollowTarget = false,
+    SpectateTarget = false,
+    Spinbot = false,
+    SpinSpeed = 50,
+    Fly = false,
+    FlySpeed = 50,
+    Noclip = false,
+    WalkSpeedEnabled = false,
+    WalkSpeed = 50,
+    JumpPowerEnabled = false,
+    JumpPower = 100,
+    InfiniteJump = false,
+    ESP = false,
+    ClickTP = false,
+    ChatSpam = false,
+    ChatSpamText = "GZHUB ON TOP!",
+    ChatSpamDelay = 3
+}
+
+-- 3. Helper & Core Engines
+
+-- FE Fling Engine (หมุนชนให้ตัวละครเป้าหมายกระเด็น)
+local function FlingPlayer(targetChar)
+    if not targetChar or not targetChar:FindFirstChild("HumanoidRootPart") then return end
+    local myChar = LocalPlayer.Character
+    if not myChar or not myChar:FindFirstChild("HumanoidRootPart") then return end
+
+    local myRoot = myChar.HumanoidRootPart
+    local targetRoot = targetChar.HumanoidRootPart
+
+    local oldVel = myRoot.Velocity
+    local oldRotVel = myRoot.RotVelocity
+
+    pcall(function()
+        myRoot.Velocity = Vector3.new(0, 10000, 0)
+        myRoot.RotVelocity = Vector3.new(10000, 10000, 10000)
+        myRoot.CFrame = targetRoot.CFrame * CFrame.new(0, 0, 0)
+    end)
+end
+
+task.spawn(function()
+    while task.wait(0.01) do
+        if getgenv().GZHUB.FlingTarget and getgenv().GZHUB.TargetPlayer ~= "" then
+            local targetPlayer = Players:FindFirstChild(getgenv().GZHUB.TargetPlayer)
+            if targetPlayer and targetPlayer.Character then
+                FlingPlayer(targetPlayer.Character)
+            end
+        elseif getgenv().GZHUB.FlingAll then
+            for _, player in ipairs(Players:GetPlayers()) do
+                if player ~= LocalPlayer and player.Character then
+                    FlingPlayer(player.Character)
+                    task.wait(0.05)
+                end
+            end
+        end
+    end
+end)
+
+-- Spinbot Engine (หมุนตัวดิฟต์)
+RunService.RenderStepped:Connect(function()
+    if getgenv().GZHUB.Spinbot then
+        local char = LocalPlayer.Character
+        if char and char:FindFirstChild("HumanoidRootPart") then
+            char.HumanoidRootPart.CFrame = char.HumanoidRootPart.CFrame * CFrame.Angles(0, math.rad(getgenv().GZHUB.SpinSpeed), 0)
+        end
+    end
+end)
+
+-- Follow Target Loop (วาปติดหลังแกล้งคน)
+task.spawn(function()
+    while task.wait(0.05) do
+        if getgenv().GZHUB.FollowTarget and getgenv().GZHUB.TargetPlayer ~= "" then
+            local targetPlayer = Players:FindFirstChild(getgenv().GZHUB.TargetPlayer)
+            if targetPlayer and targetPlayer.Character and targetPlayer.Character:FindFirstChild("HumanoidRootPart") then
+                local myChar = LocalPlayer.Character
+                if myChar and myChar:FindFirstChild("HumanoidRootPart") then
+                    myChar.HumanoidRootPart.CFrame = targetPlayer.Character.HumanoidRootPart.CFrame * CFrame.new(0, 0, 3)
+                end
+            end
+        end
+    end
+end)
+
+-- Spectate Camera Loop
+RunService.RenderStepped:Connect(function()
+    pcall(function()
+        if getgenv().GZHUB.SpectateTarget and getgenv().GZHUB.TargetPlayer ~= "" then
+            local targetPlayer = Players:FindFirstChild(getgenv().GZHUB.TargetPlayer)
+            if targetPlayer and targetPlayer.Character and targetPlayer.Character:FindFirstChild("Humanoid") then
+                Camera.CameraSubject = targetPlayer.Character.Humanoid
+            end
+        else
+            if LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("Humanoid") then
+                Camera.CameraSubject = LocalPlayer.Character.Humanoid
+            end
+        end
+    end)
+end)
+
+-- Flight Engine (ระบบบินอิสระ)
+local bv, bg
+task.spawn(function()
+    while task.wait(0.1) do
+        local char = LocalPlayer.Character
+        if getgenv().GZHUB.Fly and char and char:FindFirstChild("HumanoidRootPart") then
+            local root = char.HumanoidRootPart
+            if not root:FindFirstChild("GZ_FlyBV") then
+                bv = Instance.new("BodyVelocity")
+                bv.Name = "GZ_FlyBV"
+                bv.MaxForce = Vector3.new(math.huge, math.huge, math.huge)
+                bv.Velocity = Vector3.zero
+                bv.Parent = root
+            end
+            if not root:FindFirstChild("GZ_FlyBG") then
+                bg = Instance.new("BodyGyro")
+                bg.Name = "GZ_FlyBG"
+                bg.MaxTorque = Vector3.new(math.huge, math.huge, math.huge)
+                bg.CFrame = root.CFrame
+                bg.Parent = root
+            end
+
+            local moveDir = Vector3.zero
+            if UserInputService:IsKeyDown(Enum.KeyCode.W) then moveDir = moveDir + Camera.CFrame.LookVector end
+            if UserInputService:IsKeyDown(Enum.KeyCode.S) then moveDir = moveDir - Camera.CFrame.LookVector end
+            if UserInputService:IsKeyDown(Enum.KeyCode.A) then moveDir = moveDir - Camera.CFrame.RightVector end
+            if UserInputService:IsKeyDown(Enum.KeyCode.D) then moveDir = moveDir + Camera.CFrame.RightVector end
+            if UserInputService:IsKeyDown(Enum.KeyCode.Space) then moveDir = moveDir + Vector3.new(0, 1, 0) end
+            if UserInputService:IsKeyDown(Enum.KeyCode.LeftShift) then moveDir = moveDir - Vector3.new(0, 1, 0) end
+
+            root.GZ_FlyBV.Velocity = moveDir * getgenv().GZHUB.FlySpeed
+            root.GZ_FlyBG.CFrame = Camera.CFrame
+        else
+            if char and char:FindFirstChild("HumanoidRootPart") then
+                if char.HumanoidRootPart:FindFirstChild("GZ_FlyBV") then char.HumanoidRootPart.GZ_FlyBV:Destroy() end
+                if char.HumanoidRootPart:FindFirstChild("GZ_FlyBG") then char.HumanoidRootPart.GZ_FlyBG:Destroy() end
+            end
+        end
+    end
+end)
+
+-- ESP Engine (มองทะลุกำแพงแสดงชื่อผู้เล่นทุกคน)
+local function CreateESP(player)
+    if player == LocalPlayer then return end
+
+    local function applyHighlight(char)
+        if not char:FindFirstChild("GZ_ESP_Highlight") then
+            local highlight = Instance.new("Highlight")
+            highlight.Name = "GZ_ESP_Highlight"
+            highlight.FillColor = Color3.fromRGB(255, 0, 120)
+            highlight.OutlineColor = Color3.fromRGB(255, 255, 255)
+            highlight.FillTransparency = 0.5
+            highlight.OutlineTransparency = 0
+            highlight.Parent = char
+        end
+
+        local head = char:FindFirstChild("Head")
+        if head and not head:FindFirstChild("GZ_ESP_Tag") then
+            local bb = Instance.new("BillboardGui")
+            bb.Name = "GZ_ESP_Tag"
+            bb.Size = UDim2.new(0, 100, 0, 30)
+            bb.StudsOffset = Vector3.new(0, 2, 0)
+            bb.AlwaysOnTop = true
+            bb.Parent = head
+
+            local txt = Instance.new("TextLabel")
+            txt.Size = UDim2.new(1, 0, 1, 0)
+            txt.BackgroundTransparency = 1
+            txt.Text = player.Name
+            txt.TextColor3 = Color3.fromRGB(255, 255, 255)
+            txt.Font = Enum.Font.FredokaOne
+            txt.TextSize = 14
+            txt.TextStrokeTransparency = 0
+            txt.Parent = bb
+        end
+    end
+
+    if player.Character then applyHighlight(player.Character) end
+    player.CharacterAdded:Connect(applyHighlight)
+end
+
+task.spawn(function()
+    while task.wait(1) do
+        if getgenv().GZHUB.ESP then
+            for _, p in ipairs(Players:GetPlayers()) do
+                CreateESP(p)
+            end
+        else
+            for _, p in ipairs(Players:GetPlayers()) do
+                if p.Character then
+                    if p.Character:FindFirstChild("GZ_ESP_Highlight") then p.Character.GZ_ESP_Highlight:Destroy() end
+                    if p.Character:FindFirstChild("Head") and p.Character.Head:FindFirstChild("GZ_ESP_Tag") then
+                        p.Character.Head.GZ_ESP_Tag:Destroy()
+                    end
+                end
+            end
+        end
+    end
+end)
+
+-- Click Teleport Engine (คลิกที่ไหนวาปไปที่นั่น)
+Mouse.Button1Down:Connect(function()
+    if getgenv().GZHUB.ClickTP and Mouse.Hit then
+        local char = LocalPlayer.Character
+        if char and char:FindFirstChild("HumanoidRootPart") then
+            char.HumanoidRootPart.CFrame = CFrame.new(Mouse.Hit.Position + Vector3.new(0, 3, 0))
+        end
+    end
+end)
+
+-- Chat Spam Engine
+task.spawn(function()
+    while task.wait(getgenv().GZHUB.ChatSpamDelay) do
+        if getgenv().GZHUB.ChatSpam then
+            pcall(function()
+                local TextChatService = game:GetService("TextChatService")
+                if TextChatService and TextChatService.ChatVersion == Enum.ChatVersion.TextChatService then
+                    local generalChannel = TextChatService.TextChannels:FindFirstChild("RBXGeneral")
+                    if generalChannel then
+                        generalChannel:SendAsync(getgenv().GZHUB.ChatSpamText)
+                    end
+                else
+                    ReplicatedStorage.DefaultChatSystemChatEvents.SayMessageRequest:FireServer(getgenv().GZHUB.ChatSpamText, "All")
+                end
+            end)
+        end
+    end
+end)
+
+-- Noclip Engine
+RunService.Stepped:Connect(function()
+    if getgenv().GZHUB.Noclip then
+        local char = LocalPlayer.Character
+        if char then
+            for _, part in ipairs(char:GetDescendants()) do
+                if part:IsA("BasePart") and part.CanCollide then
+                    part.CanCollide = false
+                end
+            end
+        end
+    end
+end)
+
+-- WalkSpeed / JumpPower Engine
+RunService.RenderStepped:Connect(function()
+    local char = LocalPlayer.Character
+    if char and char:FindFirstChild("Humanoid") then
+        if getgenv().GZHUB.WalkSpeedEnabled then
+            char.Humanoid.WalkSpeed = getgenv().GZHUB.WalkSpeed
+        end
+        if getgenv().GZHUB.JumpPowerEnabled then
+            char.Humanoid.UseJumpPower = true
+            char.Humanoid.JumpPower = getgenv().GZHUB.JumpPower
+        end
+    end
+end)
+
+UserInputService.JumpRequest:Connect(function()
+    if getgenv().GZHUB.InfiniteJump then
+        local char = LocalPlayer.Character
+        if char and char:FindFirstChild("Humanoid") then
+            char.Humanoid:ChangeState(Enum.HumanoidStateType.Jumping)
+        end
+    end
+end)
+
+-- 4. CUSTOM GZHUB GUI SETUP (ขอบรุ้งวิ่งอ้อม + ปุ่มเปิด/ปิด GZ byGC สายรุ้ง)
+
+if CoreGui:FindFirstChild("GZHUB_GUI") then CoreGui.GZHUB_GUI:Destroy() end
+if LocalPlayer.PlayerGui:FindFirstChild("GZHUB_GUI") then LocalPlayer.PlayerGui.GZHUB_GUI:Destroy() end
+
+local ScreenGui = Instance.new("ScreenGui")
+ScreenGui.Name = "GZHUB_GUI"
+ScreenGui.ResetOnSpawn = false
+ScreenGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
+
+local ParentTarget = (gethui and gethui()) or CoreGui or LocalPlayer:WaitForChild("PlayerGui")
+ScreenGui.Parent = ParentTarget
+
+-- Rainbow Helper Sequence
+local ColorSequencePoints = {
+    ColorSequenceKeypoint.new(0, Color3.fromRGB(255, 0, 0)),
+    ColorSequenceKeypoint.new(0.16, Color3.fromRGB(255, 150, 0)),
+    ColorSequenceKeypoint.new(0.33, Color3.fromRGB(255, 255, 0)),
+    ColorSequenceKeypoint.new(0.5, Color3.fromRGB(0, 255, 100)),
+    ColorSequenceKeypoint.new(0.66, Color3.fromRGB(0, 180, 255)),
+    ColorSequenceKeypoint.new(0.83, Color3.fromRGB(150, 0, 255)),
+    ColorSequenceKeypoint.new(1, Color3.fromRGB(255, 0, 0))
+}
+
+-- OPEN/CLOSE TOGGLE BUTTON ("GZ byGC" Rainbow Text)
+local ToggleButton = Instance.new("TextButton")
+ToggleButton.Name = "GZ_ToggleButton"
+ToggleButton.Size = UDim2.new(0, 135, 0, 42)
+ToggleButton.Position = UDim2.new(0, 15, 0.3, 0)
+ToggleButton.BackgroundColor3 = Color3.fromRGB(18, 20, 28)
+ToggleButton.BorderSizePixel = 0
+ToggleButton.Active = true
+ToggleButton.Draggable = true
+ToggleButton.AutoButtonColor = false
+ToggleButton.Text = "GZ byGC"
+ToggleButton.Font = Enum.Font.FredokaOne
+ToggleButton.TextSize = 20
+ToggleButton.Parent = ScreenGui
+
+local ToggleCorner = Instance.new("UICorner")
+ToggleCorner.CornerRadius = UDim.new(0, 10)
+ToggleCorner.Parent = ToggleButton
+
+local ToggleStroke = Instance.new("UIStroke")
+ToggleStroke.Thickness = 2.5
+ToggleStroke.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
+ToggleStroke.Parent = ToggleButton
+
+local ToggleStrokeGradient = Instance.new("UIGradient")
+ToggleStrokeGradient.Color = ColorSequence.new(ColorSequencePoints)
+ToggleStrokeGradient.Parent = ToggleStroke
+
+-- MAIN UI WINDOW (GZHUB)
+local MainFrame = Instance.new("Frame")
+MainFrame.Name = "MainFrame"
+MainFrame.Size = UDim2.new(0, 640, 0, 430)
+MainFrame.Position = UDim2.new(0.5, -320, 0.5, -215)
+MainFrame.BackgroundColor3 = Color3.fromRGB(15, 17, 24)
+MainFrame.BorderSizePixel = 0
+MainFrame.Active = true
+MainFrame.Draggable = true
+MainFrame.Parent = ScreenGui
+
+local MainCorner = Instance.new("UICorner")
+MainCorner.CornerRadius = UDim.new(0, 14)
+MainCorner.Parent = MainFrame
+
+-- RAINBOW RUNNING BORDER (ขอบรุ้งวิ่งอ้อม)
+local RainbowStroke = Instance.new("UIStroke")
+RainbowStroke.Name = "RainbowRunningBorder"
+RainbowStroke.Thickness = 3.5
+RainbowStroke.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
+RainbowStroke.Parent = MainFrame
+
+local RainbowGradient = Instance.new("UIGradient")
+RainbowGradient.Name = "BorderGradient"
+RainbowGradient.Color = ColorSequence.new(ColorSequencePoints)
+RainbowGradient.Parent = RainbowStroke
+
+-- ROTATING RAINBOW BORDER ANIMATION LOOP
+RunService.RenderStepped:Connect(function()
+    local rainbowColor = Color3.fromHSV((tick() * 0.6) % 1, 0.9, 1)
+    ToggleButton.TextColor3 = rainbowColor
+    
+    -- Rotate Rainbow Border around UI
+    RainbowGradient.Rotation = (RainbowGradient.Rotation + 2.5) % 360
+    ToggleStrokeGradient.Rotation = (ToggleStrokeGradient.Rotation + 3) % 360
+end)
+
+-- HEADER BAR
+local Header = Instance.new("Frame")
+Header.Name = "Header"
+Header.Size = UDim2.new(1, 0, 0, 45)
+Header.BackgroundColor3 = Color3.fromRGB(22, 25, 36)
+Header.BorderSizePixel = 0
+Header.Parent = MainFrame
+
+local HeaderCorner = Instance.new("UICorner")
+HeaderCorner.CornerRadius = UDim.new(0, 14)
+HeaderCorner.Parent = Header
+
+local Title = Instance.new("TextLabel")
+Title.Size = UDim2.new(0, 320, 1, 0)
+Title.Position = UDim2.new(0, 18, 0, 0)
+Title.BackgroundTransparency = 1
+Title.Text = "GZHUB | Universal Troll & Utility"
+Title.Font = Enum.Font.FredokaOne
+Title.TextSize = 20
+Title.TextColor3 = Color3.fromRGB(255, 255, 255)
+Title.TextXAlignment = Enum.TextXAlignment.Left
+Title.Parent = Header
+
+local Subtitle = Instance.new("TextLabel")
+Subtitle.Size = UDim2.new(0, 150, 1, 0)
+Subtitle.Position = UDim2.new(0, 320, 0, 0)
+Subtitle.BackgroundTransparency = 1
+Subtitle.Text = "by GC"
+Subtitle.Font = Enum.Font.GothamBold
+Subtitle.TextSize = 13
+Subtitle.TextColor3 = Color3.fromRGB(0, 230, 255)
+Subtitle.TextXAlignment = Enum.TextXAlignment.Left
+Subtitle.Parent = Header
+
+-- Close Button
+local CloseBtn = Instance.new("TextButton")
+CloseBtn.Size = UDim2.new(0, 30, 0, 30)
+CloseBtn.Position = UDim2.new(1, -38, 0.5, -15)
+CloseBtn.BackgroundColor3 = Color3.fromRGB(255, 55, 80)
+CloseBtn.Text = "X"
+CloseBtn.Font = Enum.Font.GothamBold
+CloseBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+CloseBtn.TextSize = 14
+CloseBtn.Parent = Header
+
+local CloseCorner = Instance.new("UICorner")
+CloseCorner.CornerRadius = UDim.new(0, 8)
+CloseCorner.Parent = CloseBtn
+
+CloseBtn.MouseButton1Click:Connect(function()
+    MainFrame.Visible = false
+end)
+
+-- Toggle UI Function
+ToggleButton.MouseButton1Click:Connect(function()
+    MainFrame.Visible = not MainFrame.Visible
+end)
+
+-- Keybind Toggle UI
+UserInputService.InputBegan:Connect(function(input, gpe)
+    if not gpe then
+        if input.KeyCode == Enum.KeyCode.RightControl then
+            MainFrame.Visible = not MainFrame.Visible
+        elseif input.KeyCode == Enum.KeyCode.N then
+            getgenv().GZHUB.Noclip = not getgenv().GZHUB.Noclip
+        end
+    end
+end)
+
+-- SIDEBAR TABS SYSTEM
+local Sidebar = Instance.new("Frame")
+Sidebar.Size = UDim2.new(0, 155, 1, -55)
+Sidebar.Position = UDim2.new(0, 8, 0, 50)
+Sidebar.BackgroundColor3 = Color3.fromRGB(20, 22, 32)
+Sidebar.BorderSizePixel = 0
+Sidebar.Parent = MainFrame
+
+local SidebarCorner = Instance.new("UICorner")
+SidebarCorner.CornerRadius = UDim.new(0, 10)
+SidebarCorner.Parent = Sidebar
+
+local TabContainer = Instance.new("Frame")
+TabContainer.Size = UDim2.new(1, -175, 1, -55)
+TabContainer.Position = UDim2.new(0, 168, 0, 50)
+TabContainer.BackgroundColor3 = Color3.fromRGB(20, 22, 32)
+TabContainer.BorderSizePixel = 0
+TabContainer.Parent = MainFrame
+
+local ContainerCorner = Instance.new("UICorner")
+ContainerCorner.CornerRadius = UDim.new(0, 10)
+ContainerCorner.Parent = TabContainer
+
+-- Tab list & page instances
+local Tabs = {"แกล้งคน (Troll)", "ตัวละคร (Player)", "การมองเห็น (Visuals)", "วาร์ป (Teleport)", "แชทป่วน (Chat)", "ตั้งค่า (Settings)"}
+local TabPages = {}
+local TabButtons = {}
+
+local TabListLayout = Instance.new("UIListLayout")
+TabListLayout.SortOrder = Enum.SortOrder.LayoutOrder
+TabListLayout.Padding = UDim.new(0, 5)
+TabListLayout.Parent = Sidebar
+
+local TabPadding = Instance.new("UIPadding")
+TabPadding.PaddingTop = UDim.new(0, 8)
+TabPadding.PaddingLeft = UDim.new(0, 6)
+TabPadding.PaddingRight = UDim.new(0, 6)
+TabPadding.Parent = Sidebar
+
+for i, tabName in ipairs(Tabs) do
+    local btn = Instance.new("TextButton")
+    btn.Size = UDim2.new(1, 0, 0, 36)
+    btn.BackgroundColor3 = i == 1 and Color3.fromRGB(40, 45, 65) or Color3.fromRGB(26, 28, 40)
+    btn.Text = tabName
+    btn.Font = Enum.Font.GothamMedium
+    btn.TextColor3 = Color3.fromRGB(240, 240, 240)
+    btn.TextSize = 12
+    btn.Parent = Sidebar
+
+    local btnCorner = Instance.new("UICorner")
+    btnCorner.CornerRadius = UDim.new(0, 8)
+    btnCorner.Parent = btn
+
+    -- Create Page
+    local page = Instance.new("ScrollingFrame")
+    page.Size = UDim2.new(1, -16, 1, -16)
+    page.Position = UDim2.new(0, 8, 0, 8)
+    page.BackgroundTransparency = 1
+    page.ScrollBarThickness = 4
+    page.Visible = (i == 1)
+    page.Parent = TabContainer
+
+    local pageLayout = Instance.new("UIListLayout")
+    pageLayout.SortOrder = Enum.SortOrder.LayoutOrder
+    pageLayout.Padding = UDim.new(0, 8)
+    pageLayout.Parent = page
+
+    TabPages[i] = page
+    TabButtons[i] = btn
+
+    btn.MouseButton1Click:Connect(function()
+        for j, p in ipairs(TabPages) do
+            p.Visible = (j == i)
+            TabButtons[j].BackgroundColor3 = (j == i) and Color3.fromRGB(40, 45, 65) or Color3.fromRGB(26, 28, 40)
+        end
+    end)
+end
+
+-- UI HELPER CREATORS (Toggle, Slider, Button, Dropdown)
+local function CreateToggle(parent, text, defaultState, callback)
+    local frame = Instance.new("Frame")
+    frame.Size = UDim2.new(1, 0, 0, 42)
+    frame.BackgroundColor3 = Color3.fromRGB(28, 32, 46)
+    frame.Parent = parent
+
+    local corner = Instance.new("UICorner")
+    corner.CornerRadius = UDim.new(0, 8)
+    corner.Parent = frame
+
+    local label = Instance.new("TextLabel")
+    label.Size = UDim2.new(0.7, 0, 1, 0)
+    label.Position = UDim2.new(0, 12, 0, 0)
+    label.BackgroundTransparency = 1
+    label.Text = text
+    label.Font = Enum.Font.GothamMedium
+    label.TextColor3 = Color3.fromRGB(240, 240, 240)
+    label.TextSize = 12
+    label.TextXAlignment = Enum.TextXAlignment.Left
+    label.Parent = frame
+
+    local switch = Instance.new("TextButton")
+    switch.Size = UDim2.new(0, 50, 0, 24)
+    switch.Position = UDim2.new(1, -60, 0.5, -12)
+    switch.BackgroundColor3 = defaultState and Color3.fromRGB(0, 200, 120) or Color3.fromRGB(60, 65, 80)
+    switch.Text = defaultState and "ON" or "OFF"
+    switch.Font = Enum.Font.GothamBold
+    switch.TextColor3 = Color3.fromRGB(255, 255, 255)
+    switch.TextSize = 11
+    switch.Parent = frame
+
+    local switchCorner = Instance.new("UICorner")
+    switchCorner.CornerRadius = UDim.new(0, 12)
+    switchCorner.Parent = switch
+
+    local state = defaultState
+    switch.MouseButton1Click:Connect(function()
+        state = not state
+        switch.BackgroundColor3 = state and Color3.fromRGB(0, 200, 120) or Color3.fromRGB(60, 65, 80)
+        switch.Text = state and "ON" or "OFF"
+        callback(state)
+    end)
+    return frame
+end
+
+local function CreateSlider(parent, text, min, max, default, callback)
+    local frame = Instance.new("Frame")
+    frame.Size = UDim2.new(1, 0, 0, 50)
+    frame.BackgroundColor3 = Color3.fromRGB(28, 32, 46)
+    frame.Parent = parent
+
+    local corner = Instance.new("UICorner")
+    corner.CornerRadius = UDim.new(0, 8)
+    corner.Parent = frame
+
+    local label = Instance.new("TextLabel")
+    label.Size = UDim2.new(1, -20, 0, 20)
+    label.Position = UDim2.new(0, 12, 0, 5)
+    label.BackgroundTransparency = 1
+    label.Text = text .. ": " .. tostring(default)
+    label.Font = Enum.Font.GothamMedium
+    label.TextColor3 = Color3.fromRGB(240, 240, 240)
+    label.TextSize = 12
+    label.TextXAlignment = Enum.TextXAlignment.Left
+    label.Parent = frame
+
+    local sliderBack = Instance.new("TextButton")
+    sliderBack.Size = UDim2.new(1, -24, 0, 10)
+    sliderBack.Position = UDim2.new(0, 12, 0, 30)
+    sliderBack.BackgroundColor3 = Color3.fromRGB(45, 50, 65)
+    sliderBack.Text = ""
+    sliderBack.AutoButtonColor = false
+    sliderBack.Parent = frame
+
+    local sliderCorner = Instance.new("UICorner")
+    sliderCorner.CornerRadius = UDim.new(0, 5)
+    sliderCorner.Parent = sliderBack
+
+    local sliderFill = Instance.new("Frame")
+    local pct = (default - min) / (max - min)
+    sliderFill.Size = UDim2.new(pct, 0, 1, 0)
+    sliderFill.BackgroundColor3 = Color3.fromRGB(0, 180, 255)
+    sliderFill.BorderSizePixel = 0
+    sliderFill.Parent = sliderBack
+
+    local fillCorner = Instance.new("UICorner")
+    fillCorner.CornerRadius = UDim.new(0, 5)
+    fillCorner.Parent = sliderFill
+
+    local isDragging = false
+    local function UpdateSlider(input)
+        local pos = math.clamp((input.Position.X - sliderBack.AbsolutePosition.X) / sliderBack.AbsoluteSize.X, 0, 1)
+        sliderFill.Size = UDim2.new(pos, 0, 1, 0)
+        local val = math.floor(min + (max - min) * pos)
+        label.Text = text .. ": " .. tostring(val)
+        callback(val)
+    end
+
+    sliderBack.InputBegan:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+            isDragging = true
+            UpdateSlider(input)
+        end
+    end)
+
+    UserInputService.InputChanged:Connect(function(input)
+        if isDragging and (input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch) then
+            UpdateSlider(input)
+        end
+    end)
+
+    UserInputService.InputEnded:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+            isDragging = false
+        end
+    end)
+end
+
+local function CreateButton(parent, text, callback)
+    local btn = Instance.new("TextButton")
+    btn.Size = UDim2.new(1, 0, 0, 38)
+    btn.BackgroundColor3 = Color3.fromRGB(0, 140, 240)
+    btn.Text = text
+    btn.Font = Enum.Font.GothamBold
+    btn.TextColor3 = Color3.fromRGB(255, 255, 255)
+    btn.TextSize = 12
+    btn.Parent = parent
+
+    local corner = Instance.new("UICorner")
+    corner.CornerRadius = UDim.new(0, 8)
+    corner.Parent = btn
+
+    btn.MouseButton1Click:Connect(callback)
+end
+
+local function CreateDropdown(parent, title, options, callback)
+    local frame = Instance.new("Frame")
+    frame.Size = UDim2.new(1, 0, 0, 42)
+    frame.BackgroundColor3 = Color3.fromRGB(28, 32, 46)
+    frame.ClipsDescendants = true
+    frame.Parent = parent
+
+    local corner = Instance.new("UICorner")
+    corner.CornerRadius = UDim.new(0, 8)
+    corner.Parent = frame
+
+    local label = Instance.new("TextLabel")
+    label.Size = UDim2.new(0.5, 0, 0, 42)
+    label.Position = UDim2.new(0, 12, 0, 0)
+    label.BackgroundTransparency = 1
+    label.Text = title
+    label.Font = Enum.Font.GothamMedium
+    label.TextColor3 = Color3.fromRGB(240, 240, 240)
+    label.TextSize = 12
+    label.TextXAlignment = Enum.TextXAlignment.Left
+    label.Parent = frame
+
+    local selectBtn = Instance.new("TextButton")
+    selectBtn.Size = UDim2.new(0.45, 0, 0, 28)
+    selectBtn.Position = UDim2.new(0.52, 0, 0, 7)
+    selectBtn.BackgroundColor3 = Color3.fromRGB(45, 50, 68)
+    selectBtn.Text = options[1] or "เลือกรายการ..."
+    selectBtn.Font = Enum.Font.GothamMedium
+    selectBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+    selectBtn.TextSize = 11
+    selectBtn.Parent = frame
+
+    local btnCorner = Instance.new("UICorner")
+    btnCorner.CornerRadius = UDim.new(0, 6)
+    btnCorner.Parent = selectBtn
+
+    local isOpen = false
+    local optionContainer = Instance.new("Frame")
+    optionContainer.Size = UDim2.new(1, -24, 0, 0)
+    optionContainer.Position = UDim2.new(0, 12, 0, 45)
+    optionContainer.BackgroundTransparency = 1
+    optionContainer.Parent = frame
+
+    local optLayout = Instance.new("UIListLayout")
+    optLayout.Padding = UDim.new(0, 4)
+    optLayout.Parent = optionContainer
+
+    local function refreshOptions(newOptions)
+        for _, child in ipairs(optionContainer:GetChildren()) do
+            if child:IsA("TextButton") then child:Destroy() end
+        end
+
+        for _, opt in ipairs(newOptions) do
+            local optBtn = Instance.new("TextButton")
+            optBtn.Size = UDim2.new(1, 0, 0, 30)
+            optBtn.BackgroundColor3 = Color3.fromRGB(38, 42, 58)
+            optBtn.Text = tostring(opt)
+            optBtn.Font = Enum.Font.GothamMedium
+            optBtn.TextColor3 = Color3.fromRGB(230, 230, 230)
+            optBtn.TextSize = 11
+            optBtn.Parent = optionContainer
+
+            local optCorner = Instance.new("UICorner")
+            optCorner.CornerRadius = UDim.new(0, 6)
+            optCorner.Parent = optBtn
+
+            optBtn.MouseButton1Click:Connect(function()
+                selectBtn.Text = optBtn.Text
+                isOpen = false
+                frame.Size = UDim2.new(1, 0, 0, 42)
+                callback(opt)
+            end)
+        end
+    end
+
+    refreshOptions(options)
+
+    selectBtn.MouseButton1Click:Connect(function()
+        isOpen = not isOpen
+        if isOpen then
+            local count = #optionContainer:GetChildren() - 1
+            frame.Size = UDim2.new(1, 0, 0, 48 + (count * 34))
+        else
+            frame.Size = UDim2.new(1, 0, 0, 42)
+        end
+    end)
+
+    return {
+        Refresh = function(self, newOpts)
+            refreshOptions(newOpts)
+            if newOpts[1] then selectBtn.Text = tostring(newOpts[1]) end
+        end
+    }
+end
+
+-- 5. POPULATE TABS (ทุกฟังก์ชั่นแกล้งคน & ม็อดตัวละคร)
+
+-- TAB 1: 💥 TROLL & ANNOY (แกล้งคน)
+local p1 = TabPages[1]
+
+local playerList = {}
+for _, p in ipairs(Players:GetPlayers()) do
+    if p ~= LocalPlayer then table.insert(playerList, p.Name) end
+end
+
+local playerDropdownRef = CreateDropdown(p1, "เลือกคนที่จะแกล้ง", playerList, function(selected)
+    getgenv().GZHUB.TargetPlayer = selected
+end)
+
+CreateButton(p1, "🔄 รีเฟรชรายชื่อผู้เล่นในเซิร์ฟ", function()
+    local newList = {}
+    for _, p in ipairs(Players:GetPlayers()) do
+        if p ~= LocalPlayer then table.insert(newList, p.Name) end
+    end
+    playerDropdownRef:Refresh(newList)
+end)
+
+CreateToggle(p1, "💥 Fling Target (หมุนชนเป้าหมายให้บินกระเด็น)", false, function(v)
+    getgenv().GZHUB.FlingTarget = v
+end)
+
+CreateToggle(p1, "💣 Fling All (หมุนชนทุกคนในแมพให้บินกระเด็น)", false, function(v)
+    getgenv().GZHUB.FlingAll = v
+end)
+
+CreateToggle(p1, "👻 Follow Target (วาปติดหลังก่อกวนคน)", false, function(v)
+    getgenv().GZHUB.FollowTarget = v
+end)
+
+CreateToggle(p1, "👁️ Spectate Camera (ส่องมุมมองเป้าหมาย)", false, function(v)
+    getgenv().GZHUB.SpectateTarget = v
+end)
+
+CreateToggle(p1, "🌀 Spinbot (หมุนตัวละครดิฟต์ควันพุ่ง)", false, function(v)
+    getgenv().GZHUB.Spinbot = v
+end)
+
+CreateSlider(p1, "🌀 ความเร็วในการหมุนตัว (Spin Speed)", 10, 200, 50, function(v)
+    getgenv().GZHUB.SpinSpeed = v
+end)
+
+-- TAB 2: 🏃 PLAYER MODS (ม็อดตัวละคร)
+local p2 = TabPages[2]
+
+CreateToggle(p2, "🚀 เปิดใช้งานระบบบินอิสระ (Fly)", false, function(v)
+    getgenv().GZHUB.Fly = v
+end)
+
+CreateSlider(p2, "🚀 ความเร็วการบิน (Fly Speed)", 10, 300, 50, function(v)
+    getgenv().GZHUB.FlySpeed = v
+end)
+
+CreateToggle(p2, "👻 เดินทะลุกำแพง (Noclip - ปุ่ม N)", false, function(v)
+    getgenv().GZHUB.Noclip = v
+end)
+
+CreateToggle(p2, "🏃 เปิดใช้งาน เพิ่มความเร็ววิ่ง (Speed)", false, function(v)
+    getgenv().GZHUB.WalkSpeedEnabled = v
+    if not v and LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("Humanoid") then
+        LocalPlayer.Character.Humanoid.WalkSpeed = 16
+    end
+end)
+
+CreateSlider(p2, "⚡ ระดับความเร็ว (WalkSpeed)", 16, 300, 50, function(v)
+    getgenv().GZHUB.WalkSpeed = v
+end)
+
+CreateToggle(p2, "🦘 เปิดใช้งาน กระโดดสูง (JumpPower)", false, function(v)
+    getgenv().GZHUB.JumpPowerEnabled = v
+    if not v and LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("Humanoid") then
+        LocalPlayer.Character.Humanoid.JumpPower = 50
+    end
+end)
+
+CreateSlider(p2, "🚀 ระดับความสูงกระโดด", 50, 300, 100, function(v)
+    getgenv().GZHUB.JumpPower = v
+end)
+
+CreateToggle(p2, "🦘 กระโดดกลางอากาศไม่จำกัด (Inf Jump)", false, function(v)
+    getgenv().GZHUB.InfiniteJump = v
+end)
+
+-- TAB 3: 👁️ VISUALS & ESP (การมองเห็น)
+local p3 = TabPages[3]
+
+CreateToggle(p3, "👁️ เปิดใช้งาน ESP (มองเห็นตัวคนผ่านกำแพง)", false, function(v)
+    getgenv().GZHUB.ESP = v
+end)
+
+CreateButton(p3, "👤 ซ่อนตัวละครให้ล่องหน (Client Invisible)", function()
+    pcall(function()
+        local char = LocalPlayer.Character
+        if char then
+            for _, p in ipairs(char:GetDescendants()) do
+                if p:IsA("BasePart") or p:IsA("Decal") then
+                    p.Transparency = 1
+                end
+            end
+        end
+    end)
+end)
+
+CreateButton(p3, "👤 คืนค่าความชัดตัวละคร (Make Visible)", function()
+    pcall(function()
+        local char = LocalPlayer.Character
+        if char then
+            for _, p in ipairs(char:GetDescendants()) do
+                if p:IsA("BasePart") and p.Name ~= "HumanoidRootPart" then
+                    p.Transparency = 0
+                elseif p:IsA("Decal") then
+                    p.Transparency = 0
+                end
+            end
+        end
+    end)
+end)
+
+-- TAB 4: 📍 TELEPORT (วาร์ป)
+local p4 = TabPages[4]
+
+CreateToggle(p4, "🖱️ Click Teleport (คลิกเมาส์ที่ไหนวาปไปนั่น)", false, function(v)
+    getgenv().GZHUB.ClickTP = v
+end)
+
+CreateButton(p4, "🚀 วาร์ปไปหาผู้เล่นเป้าหมาย (Teleport to Target)", function()
+    if getgenv().GZHUB.TargetPlayer ~= "" then
+        local targetPlayer = Players:FindFirstChild(getgenv().GZHUB.TargetPlayer)
+        if targetPlayer and targetPlayer.Character and targetPlayer.Character:FindFirstChild("HumanoidRootPart") then
+            local myChar = LocalPlayer.Character
+            if myChar and myChar:FindFirstChild("HumanoidRootPart") then
+                myChar.HumanoidRootPart.CFrame = targetPlayer.Character.HumanoidRootPart.CFrame
+            end
+        end
+    end
+end)
+
+CreateButton(p4, "🔄 เชื่อมต่อเซิร์ฟเวอร์ใหม่ (Rejoin Server)", function()
+    game:GetService("TeleportService"):Teleport(game.PlaceId, LocalPlayer)
+end)
+
+CreateButton(p4, "🌐 สลับไปเซิร์ฟเวอร์อื่น (Server Hop)", function()
+    pcall(function()
+        local HttpService = game:GetService("HttpService")
+        local TPS = game:GetService("TeleportService")
+        local Api = "https://games.roblox.com/v1/games/" .. game.PlaceId .. "/servers/Public?sortOrder=Asc&limit=100"
+        local Get = HttpService:JSONDecode(game:HttpGet(Api))
+        if Get and Get.data then
+            for _, v in ipairs(Get.data) do
+                if type(v) == "table" and v.maxPlayers > v.playing and v.id ~= game.JobId then
+                    TPS:TeleportToPlaceInstance(game.PlaceId, v.id, LocalPlayer)
+                    break
+                end
+            end
+        end
+    end)
+end)
+
+-- TAB 5: 💬 CHAT TROLL (แชทป่วน)
+local p5 = TabPages[5]
+
+CreateToggle(p5, "💬 เปิดใช้งาน Auto Chat Spam (พิมพ์ป่วน)", false, function(v)
+    getgenv().GZHUB.ChatSpam = v
+end)
+
+CreateSlider(p5, "⏱️ ความถี่ในการส่งข้อความ (วินาที)", 1, 10, 3, function(v)
+    getgenv().GZHUB.ChatSpamDelay = v
+end)
+
+CreateButton(p5, "💬 ข้อความป่วน: 'GZHUB ON TOP!'", function()
+    getgenv().GZHUB.ChatSpamText = "GZHUB ON TOP!"
+end)
+
+CreateButton(p5, "💬 ข้อความป่วน: 'LOL YOU CAN'T CATCH ME 🤪'", function()
+    getgenv().GZHUB.ChatSpamText = "LOL YOU CAN'T CATCH ME 🤪"
+end)
+
+CreateButton(p5, "💬 ข้อความป่วน: 'GZ BY GC IS HERE 😎'", function()
+    getgenv().GZHUB.ChatSpamText = "GZ BY GC IS HERE 😎"
+end)
+
+-- TAB 6: ⚙️ SETTINGS
+local p6 = TabPages[6]
+
+CreateButton(p6, "❌ ทำลายล้างและปิด UI (Destroy UI)", function()
+    ScreenGui:Destroy()
+end)
+
+print("GZHUB Universal Troll & Utility Loaded Successfully! Created by GC")
