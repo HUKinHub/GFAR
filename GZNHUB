@@ -1,0 +1,160 @@
+local Players = game:GetService("Players")
+local player = Players.LocalPlayer
+local playerGui = player:WaitForChild("PlayerGui")
+
+if playerGui:FindFirstChild("SolarisV2Gui") then
+    playerGui.SolarisV2Gui:Destroy()
+end
+
+local screenGui = Instance.new("ScreenGui")
+screenGui.Name = "SolarisV2Gui"
+screenGui.ResetOnSpawn = false
+screenGui.Parent = playerGui
+
+local mainFrame = Instance.new("Frame")
+mainFrame.Size = UDim2.new(0, 320, 0, 420)
+mainFrame.Position = UDim2.new(0.5, -160, 0.5, -210)
+mainFrame.BackgroundColor3 = Color3.fromRGB(25, 25, 25)
+mainFrame.BorderSizePixel = 0
+mainFrame.Active = true
+mainFrame.Draggable = true
+mainFrame.Parent = screenGui
+
+local mainCorner = Instance.new("UICorner")
+mainCorner.CornerRadius = UDim.new(0, 6)
+mainCorner.Parent = mainFrame
+
+local titleLabel = Instance.new("TextLabel")
+titleLabel.Size = UDim2.new(1, 0, 0, 30)
+titleLabel.BackgroundColor3 = Color3.fromRGB(35, 35, 35)
+titleLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
+titleLabel.TextSize = 13
+titleLabel.Font = Enum.Font.SourceSansBold
+titleLabel.Text = " Solaris V2 | by kafigCxllme"
+titleLabel.TextXAlignment = Enum.TextXAlignment.Left
+titleLabel.Parent = mainFrame
+
+local titleCorner = Instance.new("UICorner")
+titleCorner.CornerRadius = UDim.new(0, 6)
+titleCorner.Parent = titleLabel
+
+local scrollingFrame = Instance.new("ScrollingFrame")
+scrollingFrame.Size = UDim2.new(1, -10, 1, -40)
+scrollingFrame.Position = UDim2.new(0, 5, 0, 35)
+scrollingFrame.BackgroundTransparency = 1
+scrollingFrame.BorderSizePixel = 0
+scrollingFrame.CanvasSize = UDim2.new(0, 0, 0, 450)
+scrollingFrame.ScrollBarThickness = 4
+scrollingFrame.Parent = mainFrame
+
+local function createRow(name, defaultValue, yPos)
+    local label = Instance.new("TextLabel")
+    label.Size = UDim2.new(0, 180, 0, 25)
+    label.Position = UDim2.new(0, 5, 0, yPos)
+    label.BackgroundTransparency = 1
+    label.TextColor3 = Color3.fromRGB(220, 220, 220)
+    label.TextSize = 12
+    label.Font = Enum.Font.SourceSans
+    label.Text = " " .. name
+    label.TextXAlignment = Enum.TextXAlignment.Left
+    label.Parent = scrollingFrame
+
+    local valBox = Instance.new("TextBox")
+    valBox.Size = UDim2.new(0, 45, 0, 22)
+    valBox.Position = UDim2.new(0, 195, 0, yPos)
+    valBox.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
+    valBox.TextColor3 = Color3.fromRGB(255, 255, 255)
+    valBox.TextSize = 12
+    valBox.Font = Enum.Font.SourceSans
+    valBox.Text = tostring(defaultValue)
+    valBox.Parent = scrollingFrame
+
+    local boxCorner = Instance.new("UICorner")
+    boxCorner.CornerRadius = UDim.new(0, 4)
+    boxCorner.Parent = valBox
+
+    local toggleBtn = Instance.new("TextButton")
+    toggleBtn.Size = UDim2.new(0, 50, 0, 22)
+    toggleBtn.Position = UDim2.new(0, 245, 0, yPos)
+    toggleBtn.BackgroundColor3 = Color3.fromRGB(40, 160, 110)
+    toggleBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+    toggleBtn.TextSize = 11
+    toggleBtn.Font = Enum.Font.SourceSansBold
+    toggleBtn.Text = "On"
+    toggleBtn.Parent = scrollingFrame
+
+    local btnCorner = Instance.new("UICorner")
+    btnCorner.CornerRadius = UDim.new(0, 4)
+    btnCorner.Parent = toggleBtn
+
+    toggleBtn.MouseButton1Click:Connect(function()
+        if toggleBtn.Text == "On" then
+            toggleBtn.Text = "Off"
+            toggleBtn.BackgroundColor3 = Color3.fromRGB(160, 40, 40)
+        else
+            toggleBtn.Text = "On"
+            toggleBtn.BackgroundColor3 = Color3.fromRGB(40, 160, 110)
+        end
+    end)
+end
+
+createRow("Move Speed", "29", 5)
+createRow("Jump Power (1-50)", "50", 35)
+createRow("Fly Speed (1-300)", "50", 65)
+createRow("Vehicle Speed Multiplier", "0.6", 95)
+createRow("Hitbox Size", "7", 125)
+createRow("Invisibility", "Off", 155)
+createRow("Anti-Kick", "On", 185)
+
+local weaponHeader = Instance.new("TextLabel")
+weaponHeader.Size = UDim2.new(1, -10, 0, 20)
+weaponHeader.Position = UDim2.new(0, 5, 0, 220)
+weaponHeader.BackgroundTransparency = 1
+weaponHeader.TextColor3 = Color3.fromRGB(120, 200, 255)
+weaponHeader.TextSize = 12
+weaponHeader.Font = Enum.Font.SourceSansBold
+weaponHeader.Text = "Weapon Utilities"
+weaponHeader.TextXAlignment = Enum.TextXAlignment.Left
+weaponHeader.Parent = scrollingFrame
+
+local function createWeaponButton(weaponName, yPos)
+    local label = Instance.new("TextLabel")
+    label.Size = UDim2.new(0, 180, 0, 25)
+    label.Position = UDim2.new(0, 5, 0, yPos)
+    label.BackgroundTransparency = 1
+    label.TextColor3 = Color3.fromRGB(220, 220, 220)
+    label.TextSize = 12
+    label.Font = Enum.Font.SourceSans
+    label.Text = " Teleport " .. weaponName
+    label.TextXAlignment = Enum.TextXAlignment.Left
+    label.Parent = scrollingFrame
+
+    local tpBtn = Instance.new("TextButton")
+    tpBtn.Size = UDim2.new(0, 100, 0, 22)
+    tpBtn.Position = UDim2.new(0, 195, 0, yPos)
+    tpBtn.BackgroundColor3 = Color3.fromRGB(30, 120, 200)
+    tpBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+    tpBtn.TextSize = 11
+    tpBtn.Font = Enum.Font.SourceSansBold
+    tpBtn.Text = "TELEPORT"
+    tpBtn.Parent = scrollingFrame
+
+    local btnCorner = Instance.new("UICorner")
+    btnCorner.CornerRadius = UDim.new(0, 4)
+    btnCorner.Parent = tpBtn
+
+    tpBtn.MouseButton1Click:Connect(function()
+        local character = player.Character
+        if not character or not character:FindFirstChild("HumanoidRootPart") then return end
+        local hrp = character.HumanoidRootPart
+
+        for _, obj in ipairs(workspace:GetDescendants()) do
+            if obj:IsA("Tool") and string.find(string.lower(obj.Name), string.lower(weaponName)) and obj:FindFirstChild("Handle") then
+                obj.Handle.CFrame = hrp.CFrame + Vector3.new(0, 2, 0)
+            end
+        end
+    end)
+end
+
+createWeaponButton("Shotgun", 245)
+createWeaponButton("MP5", 275)
