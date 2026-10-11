@@ -1,0 +1,204 @@
+-- ==========================================
+-- ระบบบินสไตล์มินิมอล By บักคิว (WASD + Up/Down + พิมพ์ความเร็วช่องแดง)
+-- ==========================================
+
+local Players = game:GetService("Players")
+local RunService = game:GetService("RunService")
+local UIS = game:GetService("UserInputService")
+local LocalPlayer = Players.LocalPlayer
+local PlayerGui = LocalPlayer:WaitForChild("PlayerGui")
+
+-- 1. สร้าง ScreenGui หลัก (แสดงตลอดเวลา ไม่ต้องกดเปิด-ปิด)
+local ScreenGui = Instance.new("ScreenGui")
+ScreenGui.Name = "BakuFlyGui"
+ScreenGui.ResetOnSpawn = false
+ScreenGui.Parent = PlayerGui
+
+-- 2. สร้างกรอบเมนูหลัก (จัดเรียงแบบ Compact เล็กกะทัดรัด)
+local MainFrame = Instance.new("Frame")
+MainFrame.Name = "MainFrame"
+MainFrame.Size = UDim2.new(0, 260, 0, 80)
+MainFrame.Position = UDim2.new(0.1, 0, 0.2, 0)
+MainFrame.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
+MainFrame.BorderSizePixel = 0
+MainFrame.Active = true
+MainFrame.Draggable = true -- ทำให้ลากย้ายหน้าจอเล่นได้
+MainFrame.Parent = ScreenGui
+
+local UICorner = Instance.new("UICorner")
+UICorner.CornerRadius = UDim.new(0, 6)
+UICorner.Parent = MainFrame
+
+-- ==========================================
+-- 3. สร้างปุ่มฟังก์ชันต่างๆ ตามเรฟ
+-- ==========================================
+
+-- [แถวบน - ซ้าย] ปุ่ม UP (บินขึ้น)
+local UpButton = Instance.new("TextButton")
+UpButton.Size = UDim2.new(0, 60, 0, 35)
+UpButton.Position = UDim2.new(0, 5, 0, 5)
+UpButton.BackgroundColor3 = Color3.fromRGB(100, 255, 150) -- สีเขียวพาสเทล
+UpButton.TextColor3 = Color3.fromRGB(0, 0, 0)
+UpButton.TextSize = 13
+UpButton.Font = Enum.Font.GothamBold
+UpButton.Text = "UP"
+UpButton.Parent = MainFrame
+
+-- [แถวบน - กลาง] ปุ่ม DOWN (บินลง)
+local DownButton = Instance.new("TextButton")
+DownButton.Size = UDim2.new(0, 60, 0, 35)
+DownButton.Position = UDim2.new(0, 70, 0, 5)
+DownButton.BackgroundColor3 = Color3.fromRGB(220, 255, 100) -- สีเหลืองอ่อน
+DownButton.TextColor3 = Color3.fromRGB(0, 0, 0)
+DownButton.TextSize = 13
+DownButton.Font = Enum.Font.GothamBold
+DownButton.Text = "DOWN"
+DownButton.Parent = MainFrame
+
+-- [แถบบน - ขวา] เครดิต (สีม่วง) By บักคิว
+local CreditLabel = Instance.new("TextLabel")
+CreditLabel.Size = UDim2.new(0, 115, 0, 35)
+CreditLabel.Position = UDim2.new(0, 135, 0, 5)
+CreditLabel.BackgroundColor3 = Color3.fromRGB(200, 50, 220) -- สีม่วง
+CreditLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
+CreditLabel.TextSize = 11
+CreditLabel.Font = Enum.Font.GothamBold
+CreditLabel.Text = "By บักคิว"
+CreditLabel.Parent = MainFrame
+
+-- [แถวล่าง - ซ้าย] ช่องสีแดงสำหรับพิมพ์ความเร็ว (1-1000)
+local SpeedBox = Instance.new("TextBox")
+SpeedBox.Size = UDim2.new(0, 60, 0, 35)
+SpeedBox.Position = UDim2.new(0, 5, 0, 42)
+SpeedBox.BackgroundColor3 = Color3.fromRGB(230, 60, 20) -- สีแดงส้ม
+SpeedBox.TextColor3 = Color3.fromRGB(255, 255, 255)
+SpeedBox.TextSize = 14
+SpeedBox.Font = Enum.Font.GothamBold
+SpeedBox.Text = "50"
+SpeedBox.ClearTextOnFocus = false
+SpeedBox.Parent = MainFrame
+
+-- [แถวล่าง - กลาง] ปุ่มสีเหลือง `fly` (เปิด-ปิดบิน)
+local FlyButton = Instance.new("TextButton")
+FlyButton.Size = UDim2.new(0, 60, 0, 35)
+FlyButton.Position = UDim2.new(0, 70, 0, 42)
+FlyButton.BackgroundColor3 = Color3.fromRGB(255, 230, 50) -- สีเหลือง
+FlyButton.TextColor3 = Color3.fromRGB(0, 0, 0)
+FlyButton.TextSize = 13
+FlyButton.Font = Enum.Font.GothamBold
+FlyButton.Text = "fly"
+FlyButton.Parent = MainFrame
+
+-- [แถวล่าง - ขวา] ปุ่มปิดเมนู (กากบาท X สีแดงเข้ม)
+local CloseButton = Instance.new("TextButton")
+CloseButton.Size = UDim2.new(0, 115, 0, 35)
+CloseButton.Position = UDim2.new(0, 135, 0, 42)
+CloseButton.BackgroundColor3 = Color3.fromRGB(180, 40, 40)
+CloseButton.TextColor3 = Color3.fromRGB(255, 255, 255)
+CloseButton.TextSize = 13
+CloseButton.Font = Enum.Font.GothamBold
+CloseButton.Text = "ปิดเมนู (X)"
+CloseButton.Parent = MainFrame
+
+-- ==========================================
+-- 4. ระบบการทำงานของปุ่มและความเร็ว
+-- ==========================================
+local isFlying = false
+local currentSpeed = 50
+local isMovingUp = false
+local isMovingDown = false
+local bodyVelocity, bodyGyro, flyConnection
+
+-- ตรวจสอบค่าความเร็วในช่องสีแดง
+SpeedBox.FocusLost:Connect(function()
+    local num = tonumber(SpeedBox.Text)
+    if num then
+        if num < 1 then num = 1 end
+        if num > 1000 then num = 1000 end
+        currentSpeed = num
+        SpeedBox.Text = tostring(num)
+    else
+        SpeedBox.Text = tostring(currentSpeed)
+    end
+end)
+
+-- กดปุ่ม UP ค้างไว้เพื่อบินขึ้น / ปล่อยเพื่อหยุด
+UpButton.MouseButton1Down:Connect(function() isMovingUp = true end)
+UpButton.MouseButton1Up:Connect(function() isMovingUp = false end)
+
+-- กดปุ่ม DOWN ค้างไว้เพื่อบินลง / ปล่อยเพื่อหยุด
+DownButton.MouseButton1Down:Connect(function() isMovingDown = true end)
+DownButton.MouseButton1Up:Connect(function() isMovingDown = false end)
+
+-- ปุ่มปิดเมนู
+CloseButton.MouseButton1Click:Connect(function()
+    ScreenGui:Destroy()
+    if flyConnection then flyConnection:Disconnect() end
+end)
+
+-- ปุ่ม `fly` เปิด-ปิดระบบบิน
+FlyButton.MouseButton1Click:Connect(function()
+    local Character = LocalPlayer.Character
+    if not Character or not Character:FindFirstChild("HumanoidRootPart") then return end
+    
+    local RootPart = Character.HumanoidRootPart
+    local Humanoid = Character:FindFirstChild("Humanoid")
+    isFlying = not isFlying
+    
+    if isFlying then
+        FlyButton.BackgroundColor3 = Color3.fromRGB(50, 220, 100) -- เปลี่ยนเป็นสีเขียวตอนเปิด
+        FlyButton.Text = "ON"
+        if Humanoid then Humanoid.PlatformStand = true end
+
+        bodyGyro = Instance.new("BodyGyro")
+        bodyGyro.P = 9000
+        bodyGyro.MaxTorque = Vector3.new(400000, 400000, 400000)
+        bodyGyro.CFrame = RootPart.CFrame
+        bodyGyro.Parent = RootPart
+
+        bodyVelocity = Instance.new("BodyVelocity")
+        bodyVelocity.Velocity = Vector3.new(0, 0, 0)
+        bodyVelocity.MaxForce = Vector3.new(400000, 400000, 400000)
+        bodyVelocity.Parent = RootPart
+
+        flyConnection = RunService.RenderStepped:Connect(function()
+            if isFlying and Character and RootPart and bodyVelocity and bodyGyro then
+                local Camera = workspace.CurrentCamera
+                bodyGyro.CFrame = Camera.CFrame
+                
+                local moveDir = Vector3.new(0, 0, 0)
+                
+                -- ควบคุมด้วย WASD ปกติ
+                if UIS:IsKeyDown(Enum.KeyCode.W) then moveDir = moveDir + Camera.CFrame.LookVector end
+                if UIS:IsKeyDown(Enum.KeyCode.S) then moveDir = moveDir - Camera.CFrame.LookVector end
+                if UIS:IsKeyDown(Enum.KeyCode.D) then moveDir = moveDir + Camera.CFrame.RightVector end
+                if UIS:IsKeyDown(Enum.KeyCode.A) then moveDir = moveDir - Camera.CFrame.RightVector end
+                
+                -- ควบคุมการบินขึ้น-ลง (กดปุ่ม UP / DOWN)
+                if isMovingUp then
+                    moveDir = moveDir + Vector3.new(0, 1, 0)
+                end
+                if isMovingDown then
+                    moveDir = moveDir - Vector3.new(0, 1, 0)
+                end
+                
+                if moveDir.Magnitude > 0 then
+                    bodyVelocity.Velocity = moveDir.Unit * currentSpeed
+                else
+                    bodyVelocity.Velocity = Vector3.new(0, 0.1, 0) -- ลอยนิ่งๆ
+                end
+            end
+        end)
+    else
+        FlyButton.BackgroundColor3 = Color3.fromRGB(255, 230, 50) -- กลับเป็นสีเหลือง
+        FlyButton.Text = "fly"
+        if Humanoid then Humanoid.PlatformStand = false end
+
+        if flyConnection then
+            flyConnection:Disconnect()
+            flyConnection = nil
+        end
+        if bodyVelocity then bodyVelocity:Destroy() end
+        if bodyGyro then bodyGyro:Destroy() end
+    end
+end)
